@@ -40,4 +40,6 @@ model User {
   role         Role     @default(OWNER)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@map("users")
 }
