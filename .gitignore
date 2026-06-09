@@ -1,0 +1,16 @@
+node_modules/
+
+.env
+.env.local
+.env.*.local
+
+apps/backend/.env
+apps/frontend/.env.local
+
+.next/
+dist/
+build/
+
+__pycache__/
+*.pyc
+.vscode/
