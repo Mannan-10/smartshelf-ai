@@ -47,6 +47,12 @@ export const NavigationItems: NavigationItem[] = [
         description: 'Shop and account settings',
         roles: ['OWNER', 'ADMIN'],
     },
+    {
+        label: 'Vendors',
+        href: '/vendors',
+        description: 'Manage supplier and vendor details',
+        roles: ALL_ROLES,
+    },
 ]
 
 export function isAppRole(value: unknown): value is AppRole {

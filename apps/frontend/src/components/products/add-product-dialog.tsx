@@ -36,7 +36,7 @@ export function AddProductDialog({
     const [serverError, setServerError] = useState("");
 
     const form = useForm<ProductFormValues>({
-        resolver: zodResolver(productFormSchema),
+        resolver: zodResolver(productFormSchema) as any,
         defaultValues: defaultProductFormValues,
     });
 
@@ -44,7 +44,12 @@ export function AddProductDialog({
         setServerError("");
 
         try {
-            await productsApi.createProduct(values);
+            const payload = {
+                ...values,
+                costPrice: values.costPrice !== undefined && values.costPrice !== null ? String(values.costPrice) : undefined,
+                sellingPrice: values.sellingPrice !== undefined && values.sellingPrice !== null ? String(values.sellingPrice) : undefined,
+            };
+            await productsApi.createProduct(payload);
             await onProductCreated();
 
             form.reset(defaultProductFormValues);
