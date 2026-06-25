@@ -17,36 +17,101 @@ model Category {
 }
 
 model Product {
-  id           String    @id @default(cuid())
-  name         String
-  sku          String    @unique
-  description  String?
-  categoryId   String?
-  category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  stock        Int       @default(0)
-  reorderLevel Int       @default(10)
-  costPrice    Decimal?  @db.Decimal(10, 2)
-  sellingPrice Decimal?  @db.Decimal(10, 2)
-  expiryDate   DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id             String              @id @default(cuid())
+  name           String
+  sku            String              @unique
+  description    String?
+  categoryId     String?
+  category       Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  stock          Int                 @default(0)
+  reorderLevel   Int                 @default(10)
+  costPrice      Decimal?            @db.Decimal(10, 2)
+  sellingPrice   Decimal?            @db.Decimal(10, 2)
+  expiryDate     DateTime?
+  purchaseItems  PurchaseOrderItem[]
+  stockMovements StockMovement[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
   @@index([categoryId])
 }
 
 model Vendor {
-  id          String   @id @default(cuid())
-  name        String
-  contactName String?
-  email       String?
-  phone       String?
-  address     String?
-  gstNumber   String?
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String          @id @default(cuid())
+  name           String
+  contactName    String?
+  email          String?
+  phone          String?
+  address        String?
+  gstNumber      String?
+  notes          String?
+  purchaseOrders PurchaseOrder[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@index([name])
+}
+
+model PurchaseOrder {
+  id             String              @id @default(cuid())
+  orderNumber    String              @unique
+  vendorId       String?
+  vendor         Vendor?             @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  orderDate      DateTime            @default(now())
+  totalAmount    Decimal             @default(0) @db.Decimal(10, 2)
+  notes          String?
+  items          PurchaseOrderItem[]
+  stockMovements StockMovement[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([vendorId])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              String          @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder   @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product         @relation(fields: [productId], references: [id])
+  quantity        Int
+  unitCost        Decimal         @db.Decimal(10, 2)
+  totalCost       Decimal         @db.Decimal(10, 2)
+  stockMovements  StockMovement[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([purchaseOrderId])
+  @@index([productId])
+  @@map("purchase_order_items")
+}
+
+enum StockMovementType {
+  PURCHASE
+  SALE
+  ADJUSTMENT
+}
+
+model StockMovement {
+  id                  String             @id @default(cuid())
+  productId           String
+  product             Product            @relation(fields: [productId], references: [id])
+  type                StockMovementType
+  quantityChange      Int
+  stockBefore         Int
+  stockAfter          Int
+  purchaseOrderId     String?
+  purchaseOrder       PurchaseOrder?     @relation(fields: [purchaseOrderId], references: [id], onDelete: SetNull)
+  purchaseOrderItemId String?
+  purchaseOrderItem   PurchaseOrderItem? @relation(fields: [purchaseOrderItemId], references: [id], onDelete: SetNull)
+  note                String?
+  createdAt           DateTime           @default(now())
+
+  @@index([productId])
+  @@index([purchaseOrderId])
+  @@index([purchaseOrderItemId])
+  @@map("stock_movements")
 }
 
 enum Role {
