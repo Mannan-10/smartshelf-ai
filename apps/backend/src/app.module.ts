@@ -10,6 +10,7 @@ import { CategoriesModule } from './categories/categories.module.js';
 import { ProductsModule } from './products/products.module.js';
 import { VendorsModule } from './vendors/vendors.module.js';
 import { PurchasesModule } from './purchases/purchases.module.js';
+import { SalesModule } from './sales/sales.module.js';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { PurchasesModule } from './purchases/purchases.module.js';
     CategoriesModule,
     ProductsModule,
     VendorsModule,
-    PurchasesModule
+    PurchasesModule,
+    SalesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
