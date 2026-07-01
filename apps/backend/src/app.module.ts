@@ -11,6 +11,7 @@ import { ProductsModule } from './products/products.module.js';
 import { VendorsModule } from './vendors/vendors.module.js';
 import { PurchasesModule } from './purchases/purchases.module.js';
 import { SalesModule } from './sales/sales.module.js';
+import { AlertsModule } from './alerts/alerts.module.js';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { SalesModule } from './sales/sales.module.js';
     VendorsModule,
     PurchasesModule,
     SalesModule,
+    AlertsModule
   ],
   controllers: [AppController],
   providers: [AppService],

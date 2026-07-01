@@ -3,6 +3,7 @@ import { AppShell } from '@/components/app-shell';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { isAdminRole } from '@/lib/rbac';
 import { LogoutButton } from '@/components/ui/logout-button';
+import { AlertsBanner } from '@/components/alerts/alerts-banner';
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -29,6 +30,8 @@ export default async function DashboardPage() {
             ? 'You can access all menus, reports, settings, and admin controls.'
             : 'You have limited access to daily inventory, sales, and product operations.'}
         </p>
+
+        <AlertsBanner />
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           <div className="rounded-lg border p-5">
