@@ -33,6 +33,7 @@ model Product {
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
   saleItems      SaleItem[]
+  batches        ProductBatch[]
 
   @@index([categoryId])
 }
@@ -65,6 +66,7 @@ model PurchaseOrder {
   stockMovements StockMovement[]
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
+  batches        ProductBatch[]
 
   @@index([vendorId])
   @@map("purchase_orders")
@@ -86,6 +88,23 @@ model PurchaseOrderItem {
   @@index([purchaseOrderId])
   @@index([productId])
   @@map("purchase_order_items")
+}
+
+model ProductBatch {
+  id              String        @id @default(cuid())
+  productId       String
+  product         Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  purchaseOrderId String?
+  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id], onDelete: SetNull)
+  quantity        Int           // remaining quantity in this batch
+  unitCost        Decimal       @db.Decimal(10, 2)
+  expiryDate      DateTime?
+  receivedAt      DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+
+  @@index([productId])
+  @@index([expiryDate])
+  @@map("product_batches")
 }
 
 model Sale {

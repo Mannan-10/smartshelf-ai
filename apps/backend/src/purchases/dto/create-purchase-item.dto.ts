@@ -1,24 +1,18 @@
-import { Type } from 'class-transformer';
-import {
-  IsInt,
-  IsNotEmpty,
-  IsNumber,
-  IsString,
-  Min,
-} from 'class-validator';
+import { IsDateString, IsInt, IsNumber, IsOptional, IsPositive, IsString, Min } from 'class-validator';
 
 export class CreatePurchaseItemDto {
   @IsString()
-  @IsNotEmpty()
   productId: string;
 
-  @Type(() => Number)
   @IsInt()
-  @Min(1)
+  @IsPositive()
   quantity: number;
 
-  @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsNumber()
   @Min(0)
   unitCost: number;
+
+  @IsOptional()
+  @IsDateString()
+  expiryDate?: string; // NEW: optional expiry date per line item
 }

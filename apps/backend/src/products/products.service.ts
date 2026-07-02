@@ -152,4 +152,21 @@ export class ProductsService {
       throw error;
     }
   }
+
+  async getBatches(productId: string) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+      select: { id: true, name: true, sku: true },
+    });
+
+    if (!product) throw new NotFoundException('Product not found');
+
+    const batches = await this.prisma.productBatch.findMany({
+      where: { productId, quantity: { gt: 0 } },
+      include: { purchaseOrder: { select: { orderNumber: true, orderDate: true } } },
+      orderBy: [{ expiryDate: 'asc'}, { receivedAt: 'asc' }],
+    });
+
+    return { product, batches };
+  }
 }

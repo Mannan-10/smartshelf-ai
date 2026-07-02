@@ -23,7 +23,7 @@ function generateOrderNumber() {
 
 @Injectable()
 export class PurchasesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(createPurchaseDto: CreatePurchaseDto) {
     const orderNumber = createPurchaseDto.orderNumber || generateOrderNumber();
@@ -32,11 +32,8 @@ export class PurchasesService {
       return await this.prisma.$transaction(async (tx) => {
         if (createPurchaseDto.vendorId) {
           const vendor = await tx.vendor.findUnique({
-            where: {
-              id: createPurchaseDto.vendorId,
-            },
+            where: { id: createPurchaseDto.vendorId },
           });
-
           if (!vendor) {
             throw new BadRequestException('Vendor does not exist');
           }
@@ -46,23 +43,20 @@ export class PurchasesService {
 
         for (const item of createPurchaseDto.items) {
           const product = await tx.product.findUnique({
-            where: {
-              id: item.productId,
-            },
+            where: { id: item.productId },
           });
-
           if (!product) {
             throw new BadRequestException(
               `Product does not exist: ${item.productId}`,
             );
           }
-
           validatedItems.push({
             product,
             productId: item.productId,
             quantity: item.quantity,
             unitCost: item.unitCost,
             totalCost: item.quantity * item.unitCost,
+            expiryDate: item.expiryDate, 
           });
         }
 
@@ -98,14 +92,12 @@ export class PurchasesService {
           const stockAfter = stockBefore + item.quantity;
 
           await tx.product.update({
-            where: {
-              id: item.productId,
-            },
+            where: { id: item.productId },
             data: {
-              stock: {
-                increment: item.quantity,
-              },
+              stock: { increment: item.quantity },
               costPrice: item.unitCost,
+              // Update product-level expiryDate only if this batch has one
+              ...(item.expiryDate ? { expiryDate: new Date(item.expiryDate) } : {}),
             },
           });
 
@@ -121,24 +113,27 @@ export class PurchasesService {
               note: `Purchase order ${orderNumber}`,
             },
           });
+
+          // ── NEW: create a batch for this purchase line item ──────────────
+          await tx.productBatch.create({
+            data: {
+              productId: item.productId,
+              purchaseOrderId: purchaseOrder.id,
+              quantity: item.quantity,
+              unitCost: item.unitCost,
+              expiryDate: item.expiryDate ? new Date(item.expiryDate) : null,
+            },
+          });
+          // ─────────────────────────────────────────────────────────────────
         }
 
         return tx.purchaseOrder.findUnique({
-          where: {
-            id: purchaseOrder.id,
-          },
+          where: { id: purchaseOrder.id },
           include: {
             vendor: true,
-            items: {
-              include: {
-                product: true,
-              },
-            },
-            stockMovements: {
-              include: {
-                product: true,
-              },
-            },
+            items: { include: { product: true } },
+            stockMovements: { include: { product: true } },
+            batches: true, // NEW: include batches in response
           },
         });
       });
@@ -146,51 +141,33 @@ export class PurchasesService {
       if (isPrismaError(error, 'P2002')) {
         throw new ConflictException('Purchase order number already exists');
       }
-
       throw error;
     }
   }
 
   async findAll() {
     return this.prisma.purchaseOrder.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: { createdAt: 'desc' },
       include: {
         vendor: true,
-        items: {
-          include: {
-            product: true,
-          },
-        },
+        items: { include: { product: true } },
       },
     });
   }
 
   async findOne(id: string) {
     const purchaseOrder = await this.prisma.purchaseOrder.findUnique({
-      where: {
-        id,
-      },
+      where: { id },
       include: {
         vendor: true,
-        items: {
-          include: {
-            product: true,
-          },
-        },
-        stockMovements: {
-          include: {
-            product: true,
-          },
-        },
+        items: { include: { product: true } },
+        stockMovements: { include: { product: true } },
+        batches: true,
       },
     });
-
     if (!purchaseOrder) {
       throw new NotFoundException('Purchase order not found');
     }
-
     return purchaseOrder;
   }
 }

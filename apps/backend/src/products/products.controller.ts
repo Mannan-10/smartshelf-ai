@@ -8,10 +8,12 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { ProductsService } from './products.service.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
 import { UpdateProductDto } from './dto/update-product.dto.js';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 
 @Controller('products')
 export class ProductsController {
@@ -42,5 +44,10 @@ export class ProductsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string) {
     return this.productsService.remove(id);
+  }
+
+  @Get(':id/batches')
+  getBatches(@Param('id') id: string) {
+    return this.productsService.getBatches(id);
   }
 }
