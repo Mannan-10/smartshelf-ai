@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { getNavigationItemsForRole, type AppRole } from '@/lib/rbac';
-
+import { LogoutButton } from '@/components/ui/logout-button';
 type AppShellProps = {
   role: AppRole;
   email: string;
@@ -22,11 +22,14 @@ export function AppShell({ role, email, children }: AppShellProps) {
             <h1 className="text-xl font-bold">Inventory Dashboard</h1>
           </div>
 
-          <div className="text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span className="font-medium text-foreground">{email}</span>
             <span className="mx-2">•</span>
             <span className="rounded-full border px-3 py-1 text-xs font-semibold">
               {role}
+            </span>
+            <span className="ml-2">
+              <LogoutButton />
             </span>
           </div>
         </div>
