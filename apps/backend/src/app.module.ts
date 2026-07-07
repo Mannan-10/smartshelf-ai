@@ -13,6 +13,7 @@ import { PurchasesModule } from './purchases/purchases.module.js';
 import { SalesModule } from './sales/sales.module.js';
 import { AlertsModule } from './alerts/alerts.module.js';
 import { DashboardModule } from './dashboard/dashboard.module.js';
+import { ReportsModule } from './reports/reports.module.js';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { DashboardModule } from './dashboard/dashboard.module.js';
     SalesModule,
     AlertsModule,
     DashboardModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
