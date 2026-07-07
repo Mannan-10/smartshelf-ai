@@ -105,4 +105,35 @@ export class DashboardService {
       recentSales,
     };
   }
+
+  async getWeeklySalesTrend() {
+    // Get last 8 weeks of daily sales data
+    const since = new Date();
+    since.setDate(since.getDate() - 56); // 8 weeks back
+
+    const sales = await this.prisma.sale.findMany({
+      where: { createdAt: { gte: since } },
+      select: { createdAt: true, totalAmount: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    // Group by week (ISO week string: "2026-W01")
+    const weekMap: Record<string, { week: string; revenue: number; count: number }> = {};
+
+    for (const sale of sales) {
+      const date = new Date(sale.createdAt);
+      // Get Monday of that week
+      const monday = new Date(date);
+      monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+      const weekKey = monday.toISOString().slice(0, 10); // "2026-06-29"
+
+      if (!weekMap[weekKey]) {
+        weekMap[weekKey] = { week: weekKey, revenue: 0, count: 0 };
+      }
+      weekMap[weekKey].revenue += Number(sale.totalAmount);
+      weekMap[weekKey].count += 1;
+    }
+
+    return Object.values(weekMap).sort((a, b) => a.week.localeCompare(b.week));
+  }
 }

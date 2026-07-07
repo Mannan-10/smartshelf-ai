@@ -11,4 +11,9 @@ export class DashboardController {
   getSummary() {
     return this.dashboardService.getSummary();
   }
+
+  @Get('weekly-sales')
+  getWeeklyTrend() {
+    return this.dashboardService.getWeeklySalesTrend();
+  }
 }

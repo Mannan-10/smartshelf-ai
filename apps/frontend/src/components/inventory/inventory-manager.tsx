@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Fragment } from 'react';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -153,8 +153,8 @@ export function InventoryManager() {
                 const isLoadingBatches = batchLoading === product.id;
 
                 return (
-                  <>
-                    <TableRow key={product.id} className={isExpanded ? 'bg-muted/20' : ''}>
+                  <Fragment key={product.id}>
+                    <TableRow className={isExpanded ? 'bg-muted/20' : ''}>
                       <TableCell>
                         <div>
                           <p className="font-medium">{product.name}</p>
@@ -238,7 +238,7 @@ export function InventoryManager() {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </TableBody>
