@@ -19,6 +19,8 @@ type ForecastResult = {
     daysUntilStockout: number | null;
     reorderRecommended: boolean;
   };
+  fallback?: boolean;
+  fallbackReason?: string;
 };
 
 type Props = {
@@ -105,11 +107,10 @@ export function ForecastCard({ productId, productName, currentStock }: Props) {
 
             <div className="rounded-lg bg-muted/40 px-3 py-2 text-center">
               <p className="text-xs text-muted-foreground">Days until stockout</p>
-              <p className={`mt-1 text-lg font-bold ${
-                result.forecast.daysUntilStockout !== null && result.forecast.daysUntilStockout <= 7
+              <p className={`mt-1 text-lg font-bold ${result.forecast.daysUntilStockout !== null && result.forecast.daysUntilStockout <= 7
                   ? 'text-destructive'
                   : ''
-              }`}>
+                }`}>
                 {result.forecast.daysUntilStockout !== null
                   ? `${result.forecast.daysUntilStockout}d`
                   : '—'}
@@ -121,9 +122,20 @@ export function ForecastCard({ productId, productName, currentStock }: Props) {
           {result.forecast.reorderRecommended && (
             <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400">
               <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
               </svg>
               <span><strong>Reorder recommended</strong> — stock is at or below reorder level</span>
+            </div>
+          )}
+
+          {result.fallback && (
+            <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-400">
+              <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+              </svg>
+              <span>
+                {result.fallbackReason ?? 'Using rule-based fallback forecast'}
+              </span>
             </div>
           )}
 

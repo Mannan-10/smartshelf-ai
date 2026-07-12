@@ -1,11 +1,15 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service.js';
+import { FallbackForecastService } from './fallback-forecast.service.js';
 
 const ML_SERVICE = process.env.ML_SERVICE_URL ?? 'http://localhost:8000';
 
 @Injectable()
 export class ForecastService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly fallback: FallbackForecastService,
+  ) {}
 
   async forecastProduct(productId: string) {
     const product = await this.prisma.product.findUnique({
@@ -19,6 +23,7 @@ export class ForecastService {
 
     if (!product) throw new NotFoundException('Product not found');
 
+    // Build feature vector from real product data
     const saleItems = product.saleItems;
     const totalQuantitySold = saleItems.reduce((s, i) => s + i.quantity, 0);
     const totalRevenue      = saleItems.reduce((s, i) => s + Number(i.totalPrice), 0);
@@ -40,49 +45,54 @@ export class ForecastService {
       days_active:            daysActive,
     };
 
-    let mlResult: {
-      avg_daily_quantity: number;
-      forecast_7_days: number[];
-      forecast_total_7_days: number;
-    };
-
+    // Try ML service — fall back gracefully on any error
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
       const res = await fetch(`${ML_SERVICE}/forecast`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(features),
+        signal: controller.signal,
       });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as any).detail ?? `ML service error: ${res.status}`);
-      }
+      clearTimeout(timeout);
 
-      mlResult = await res.json();
-    } catch (err) {
-      throw new InternalServerErrorException(
-        `ML service unavailable: ${(err as Error).message}`,
-      );
+      if (!res.ok) throw new Error(`ML service responded with ${res.status}`);
+
+      const mlResult: {
+        avg_daily_quantity: number;
+        forecast_7_days: number[];
+        forecast_total_7_days: number;
+      } = await res.json();
+
+      return {
+        product: {
+          id: product.id,
+          name: product.name,
+          sku: product.sku,
+          currentStock: product.stock,
+          reorderLevel: product.reorderLevel,
+        },
+        forecast: {
+          avgDailyQuantity:   mlResult.avg_daily_quantity,
+          forecast7Days:      mlResult.forecast_7_days,
+          forecastTotal7Days: mlResult.forecast_total_7_days,
+          daysUntilStockout:  mlResult.avg_daily_quantity > 0
+            ? Math.floor(product.stock / mlResult.avg_daily_quantity)
+            : null,
+          reorderRecommended: product.stock <= product.reorderLevel,
+        },
+        fallback: false,
+      };
+
+    } catch {
+      // ML service is down or timed out — use rule-based fallback
+      const fallbackResult = await this.fallback.forecastProduct(productId);
+      if (!fallbackResult) throw new NotFoundException('Product not found');
+      return fallbackResult;
     }
-
-    return {
-      product: {
-        id: product.id,
-        name: product.name,
-        sku: product.sku,
-        currentStock: product.stock,
-        reorderLevel: product.reorderLevel,
-      },
-      forecast: {
-        avgDailyQuantity:   mlResult.avg_daily_quantity,
-        forecast7Days:      mlResult.forecast_7_days,
-        forecastTotal7Days: mlResult.forecast_total_7_days,
-        daysUntilStockout:  mlResult.avg_daily_quantity > 0
-          ? Math.floor(product.stock / mlResult.avg_daily_quantity)
-          : null,
-        reorderRecommended: product.stock <= product.reorderLevel,
-      },
-    };
   }
 
   async forecastAll() {
