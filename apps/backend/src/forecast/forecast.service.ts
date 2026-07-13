@@ -85,6 +85,7 @@ export class ForecastService {
           reorderRecommended: product.stock <= product.reorderLevel,
         },
         fallback: false,
+        fallbackReason: undefined,
       };
 
     } catch {

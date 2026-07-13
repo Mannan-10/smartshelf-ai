@@ -8,11 +8,15 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { VendorsService } from './vendors.service.js';
 import { CreateVendorDto } from './dto/create-vendor.dto.js';
 import { UpdateVendorDto } from './dto/update-vendor.dto.js';
 
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
+
+@UseGuards(JwtAuthGuard)
 @Controller('vendors')
 export class VendorsController {
   constructor(private readonly vendorsService: VendorsService) {}

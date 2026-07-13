@@ -4,10 +4,14 @@ import {
   Get,
   Param,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { PurchasesService } from './purchases.service.js';
 import { CreatePurchaseDto } from './dto/create-purchase.dto.js';
 
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
+
+@UseGuards(JwtAuthGuard)
 @Controller('purchases')
 export class PurchasesController {
   constructor(private readonly purchasesService: PurchasesService) {}
