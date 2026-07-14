@@ -181,3 +181,15 @@ model User {
 
   @@map("users")
 }
+
+model ShopSettings {
+  id           String   @id @default(cuid())
+  shopName     String   @default("My Shop")
+  contactEmail String?
+  currency     String   @default("USD")
+  address      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("shop_settings")
+}
