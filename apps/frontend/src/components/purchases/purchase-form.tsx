@@ -51,212 +51,243 @@ export function PurchaseForm({
     const items = form.watch('items');
     const total = items.reduce((sum, item) => {
         const qty = Number(item.quantity) || 0;
-        const price = Number(item.unitPrice) || 0;
+        const price = Number(item.unitCost) || 0;
         return sum + qty * price;
     }, 0);
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-2">
+                
+                {/* Vendor Section */}
+                <div className="space-y-4">
+                    <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">Supplier Details</h3>
+                    <FormField
+                        control={form.control}
+                        name="vendorId"
+                        render={({ field }) => (
+                            <FormItem className="max-w-md">
+                                <FormLabel className="text-sm font-semibold text-foreground">Select Vendor</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger className="h-10 rounded-md bg-background">
+                                            <SelectValue placeholder="Choose a supplier from the list..." />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {vendors.length === 0 ? (
+                                            <div className="py-4 text-center text-sm text-muted-foreground">No vendors available</div>
+                                        ) : vendors.map((v) => (
+                                            <SelectItem key={v.id} value={v.id}>
+                                                {v.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
 
-                {/* Vendor */}
-                <FormField
-                    control={form.control}
-                    name="vendorId"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="text-sm font-semibold">Vendor</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                    <SelectTrigger className="h-10">
-                                        <SelectValue placeholder="Select a vendor…" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {vendors.length === 0 ? (
-                                        <div className="py-4 text-center text-sm text-muted-foreground">No vendors found</div>
-                                    ) : vendors.map((v) => (
-                                        <SelectItem key={v.id} value={v.id}>
-                                            {v.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                {/* Line items */}
-                <div className="space-y-3">
+                {/* Line Items Section */}
+                <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <FormLabel className="text-sm font-semibold">Line Items</FormLabel>
-                        <span className="text-xs text-muted-foreground">{fields.length} item{fields.length !== 1 ? 's' : ''}</span>
+                        <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">Order Items</h3>
+                        <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                            {fields.length} {fields.length === 1 ? 'item' : 'items'}
+                        </span>
                     </div>
 
-                    <div className="space-y-2">
-                        {fields.map((field, index) => (
-                            <div
-                                key={field.id}
-                                className="grid gap-3 grid-cols-[1fr_80px_110px_36px] items-start rounded-xl border bg-muted/30 p-3"
-                            >
-                                {/* Product */}
-                                <FormField
-                                    control={form.control}
-                                    name={`items.${index}.productId`}
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="text-xs text-muted-foreground">Product</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
+                    <div className="rounded-lg border bg-background overflow-hidden">
+                        {/* Table Header */}
+                        <div className="grid grid-cols-[1fr_80px_120px_40px] gap-4 bg-muted/40 px-4 py-3 border-b">
+                            <div className="text-xs font-bold tracking-wider text-muted-foreground uppercase">Product</div>
+                            <div className="text-xs font-bold tracking-wider text-muted-foreground uppercase">Qty</div>
+                            <div className="text-xs font-bold tracking-wider text-muted-foreground uppercase">Price (₹)</div>
+                            <div className="text-xs font-bold tracking-wider text-muted-foreground uppercase"></div>
+                        </div>
+
+                        {/* Table Body */}
+                        <div className="p-4 space-y-3">
+                            {fields.map((field, index) => (
+                                <div key={field.id} className="grid grid-cols-[1fr_80px_120px_40px] gap-4 items-start">
+                                    {/* Product */}
+                                    <FormField
+                                        control={form.control}
+                                        name={`items.${index}.productId`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="h-10 bg-background">
+                                                            <SelectValue placeholder="Select..." />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {products.length === 0 ? (
+                                                            <div className="py-4 text-center text-sm text-muted-foreground">No products found</div>
+                                                        ) : products.map((p) => (
+                                                            <SelectItem key={p.id} value={p.id}>
+                                                                {p.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {/* Qty */}
+                                    <FormField
+                                        control={form.control}
+                                        name={`items.${index}.quantity`}
+                                        render={({ field }) => (
+                                            <FormItem>
                                                 <FormControl>
-                                                    <SelectTrigger className="h-9 text-sm">
-                                                        <SelectValue placeholder="Select product…" />
-                                                    </SelectTrigger>
+                                                    <Input
+                                                        type="number"
+                                                        min={1}
+                                                        placeholder="1"
+                                                        className="h-10 bg-background"
+                                                        {...field}
+                                                    />
                                                 </FormControl>
-                                                <SelectContent>
-                                                    {products.length === 0 ? (
-                                                        <div className="py-4 text-center text-sm text-muted-foreground">No products found</div>
-                                                    ) : products.map((p) => (
-                                                        <SelectItem key={p.id} value={p.id}>
-                                                            {p.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
-                                {/* Qty */}
-                                <FormField
-                                    control={form.control}
-                                    name={`items.${index}.quantity`}
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="text-xs text-muted-foreground">Qty</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    min={1}
-                                                    placeholder="1"
-                                                    className="h-9 text-sm"
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                    {/* Unit price */}
+                                    <FormField
+                                        control={form.control}
+                                        name={`items.${index}.unitCost`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                                                        <Input
+                                                            type="number"
+                                                            min={0}
+                                                            step={0.01}
+                                                            placeholder="0.00"
+                                                            className="h-10 pl-7 bg-background"
+                                                            {...field}
+                                                        />
+                                                    </div>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
-                                {/* Unit price */}
-                                <FormField
-                                    control={form.control}
-                                    name={`items.${index}.unitPrice`}
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="text-xs text-muted-foreground">Unit price (₹)</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    min={0}
-                                                    step={0.01}
-                                                    placeholder="0.00"
-                                                    className="h-9 text-sm"
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                {/* Remove */}
-                                <div className="pt-6">
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => remove(index)}
-                                        disabled={fields.length === 1}
-                                        className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                    >
-                                        <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                        </svg>
-                                    </Button>
+                                    {/* Remove */}
+                                    <div className="flex items-center justify-end pt-0.5">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon"
+                                            onClick={() => remove(index)}
+                                            disabled={fields.length === 1}
+                                            className="h-10 w-10 text-muted-foreground hover:text-foreground"
+                                        >
+                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                            </svg>
+                                        </Button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
 
                     <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="gap-2 text-sm"
-                        onClick={() => append({ productId: '', quantity: 1, unitPrice: 0 })}
+                        className="gap-2 text-sm font-semibold text-foreground hover:bg-transparent hover:underline px-0"
+                        onClick={() => append({ productId: '', quantity: 1, unitCost: 0 })}
                     >
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
-                        Add Item
+                        Add Another Item
                     </Button>
 
                     {form.formState.errors.items?.root && (
-                        <p className="text-sm text-destructive">
+                        <p className="text-sm font-medium text-destructive mt-2">
                             {form.formState.errors.items.root.message}
                         </p>
                     )}
                 </div>
 
-                {/* Notes */}
-                <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="text-sm font-semibold">Notes</FormLabel>
-                            <FormControl>
-                                <Input
-                                    placeholder="Payment terms, delivery notes, etc."
-                                    className="h-10"
-                                    {...field}
-                                    value={field.value ?? ''}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                {/* Notes & Summary Container */}
+                <div className="grid sm:grid-cols-2 gap-6 pt-2">
+                    {/* Notes */}
+                    <FormField
+                        control={form.control}
+                        name="notes"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="text-sm font-semibold text-foreground">Additional Notes</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        placeholder="Delivery terms, special requests..."
+                                        className="h-24 pb-14 rounded-md bg-background"
+                                        {...field}
+                                        value={field.value ?? ''}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                {/* Total summary */}
-                <div className="flex items-center justify-between rounded-xl border bg-muted/40 px-4 py-3">
-                    <span className="text-sm font-medium text-muted-foreground">Order Total</span>
-                    <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                        ₹{total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
+                    {/* Total summary */}
+                    <div className="flex flex-col justify-center rounded-lg bg-muted/20 border p-6">
+                        <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase mb-2">Total Order Value</span>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-xl font-bold text-foreground">₹</span>
+                            <span className="text-4xl font-bold tracking-tight text-foreground">
+                                {total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-end gap-3 pt-1">
+                <div className="flex justify-end gap-3 pt-6 mt-8 border-t">
                     <Button
                         type="button"
                         variant="outline"
                         onClick={onCancel}
                         disabled={isSubmitting}
+                        className="px-6"
                     >
                         Cancel
                     </Button>
-                    <Button type="submit" disabled={isSubmitting} className="gap-2">
+                    <Button 
+                        type="submit" 
+                        disabled={isSubmitting} 
+                        className="px-6 gap-2 bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                    >
                         {isSubmitting ? (
                             <>
                                 <svg className="h-4 w-4 animate-spin" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 0 0 4.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 0 1-15.357-2m15.357 2H15" />
                                 </svg>
-                                Saving…
+                                Creating Order...
                             </>
-                        ) : submitLabel}
+                        ) : (
+                            <>
+                                {submitLabel}
+                                <svg className="h-4 w-4 ml-1" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                                </svg>
+                            </>
+                        )}
                     </Button>
                 </div>
             </form>

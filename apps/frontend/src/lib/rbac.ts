@@ -65,6 +65,18 @@ export const NavigationItems: NavigationItem[] = [
         description: 'Manage purchase orders and restocks',
         roles: ALL_ROLES,
     },
+    {
+        label: 'Forecast',
+        href: '/forecast',
+        description: 'AI-driven inventory predictions',
+        roles: ALL_ROLES,
+    },
+    {
+        label: 'Alerts',
+        href: '/alerts',
+        description: 'Low stock and expiry notifications',
+        roles: ALL_ROLES,
+    },
 ]
 
 export function isAppRole(value: unknown): value is AppRole {

@@ -51,4 +51,11 @@ export const productsApi = {
       method: "DELETE",
     });
   },
+
+  adjustStock: (id: string, payload: { quantityChange: number; note?: string }) => {
+    return apiRequest<Product>(`/api/products/${id}/adjust`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
 };

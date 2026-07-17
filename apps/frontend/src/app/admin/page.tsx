@@ -4,6 +4,7 @@ import { AppShell } from '@/components/app-shell';
 import { AUTH_COOKIE_NAME, getBackendApiUrl } from '@/lib/auth-config';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { isAdminRole } from '@/lib/rbac';
+import { StaffManager } from '@/components/admin/staff-manager';
 
 type AdminOverview = {
   message: string;
@@ -128,6 +129,10 @@ export default async function AdminPage() {
               {overview.permissions.canAccessAdminPanel ? 'Yes' : 'No'}
             </li>
           </ul>
+        </div>
+
+        <div className="mt-8 pt-8 border-t">
+          <StaffManager />
         </div>
       </div>
     </AppShell>

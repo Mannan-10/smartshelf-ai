@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { productsApi } from '@/lib/products-api';
 import type { Product } from '@/types/product';
+import { AdjustStockDialog } from './adjust-stock-dialog';
 
 type Batch = {
   id: string;
@@ -143,6 +144,7 @@ export function InventoryManager() {
                 <TableHead>Reorder level</TableHead>
                 <TableHead>Expiry (product)</TableHead>
                 <TableHead>Batches</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -192,6 +194,14 @@ export function InventoryManager() {
                             ? 'Hide batches'
                             : 'View batches'}
                         </button>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <AdjustStockDialog
+                          productId={product.id}
+                          productName={product.name}
+                          currentStock={product.stock}
+                          onSuccess={loadProducts}
+                        />
                       </TableCell>
                     </TableRow>
 

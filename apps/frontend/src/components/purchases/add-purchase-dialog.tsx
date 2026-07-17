@@ -34,12 +34,20 @@ export function AddPurchaseDialog({ vendors, products, onSuccess }: AddPurchaseD
         defaultValues: {
             vendorId: '',
             notes: '',
-            items: [{ productId: '', quantity: 1, unitPrice: 0 }],
+            items: [{ productId: '', quantity: 1, unitCost: 0 }],
         },
     });
 
     async function handleSubmit(values: PurchaseFormValues) {
-        await purchasesApi.createPurchase(values);
+        const payload = {
+            ...values,
+            items: values.items.map(item => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                unitPrice: (item as any).unitCost || 0,
+            }))
+        };
+        await purchasesApi.createPurchase(payload as any);
         form.reset();
         setOpen(false);
         onSuccess();
@@ -48,28 +56,35 @@ export function AddPurchaseDialog({ vendors, products, onSuccess }: AddPurchaseD
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="gap-2 shadow-sm">
+                <Button className="gap-2 shadow-sm px-6">
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
                     New Purchase Order
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-lg">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                            <svg className="h-4 w-4 text-primary" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
-                            </svg>
-                        </div>
-                        New Purchase Order
-                    </DialogTitle>
-                    <p className="text-sm text-muted-foreground">
-                        Record a new incoming stock purchase from a vendor.
-                    </p>
-                </DialogHeader>
-                <div className="mt-2">
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden p-0 rounded-xl bg-background">
+                {/* Clean Header */}
+                <div className="border-b px-6 py-6 sm:px-8 bg-background">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-start gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-muted/30">
+                                <svg className="h-5 w-5 text-foreground" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m-2-2h4" />
+                                </svg>
+                            </div>
+                            <div className="flex flex-col gap-1 mt-0.5">
+                                <span className="text-xl font-bold tracking-tight text-foreground">New Purchase Order</span>
+                                <span className="text-sm font-normal text-muted-foreground">
+                                    Record a new incoming stock purchase from a vendor.
+                                </span>
+                            </div>
+                        </DialogTitle>
+                    </DialogHeader>
+                </div>
+
+                <div className="overflow-y-auto max-h-[calc(90vh-100px)] px-6 py-6 sm:px-8 custom-scrollbar">
                     <PurchaseForm
                         form={form}
                         isSubmitting={form.formState.isSubmitting}

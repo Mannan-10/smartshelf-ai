@@ -14,6 +14,7 @@ import { ProductsService } from './products.service.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
 import { UpdateProductDto } from './dto/update-product.dto.js';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
+import { AdjustStockDto } from './dto/adjust-stock.dto.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('products')
@@ -50,5 +51,10 @@ export class ProductsController {
   @Get(':id/batches')
   getBatches(@Param('id') id: string) {
     return this.productsService.getBatches(id);
+  }
+
+  @Post(':id/adjust')
+  adjustStock(@Param('id') id: string, @Body() adjustStockDto: AdjustStockDto) {
+    return this.productsService.adjustStock(id, adjustStockDto);
   }
 }

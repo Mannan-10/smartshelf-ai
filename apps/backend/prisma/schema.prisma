@@ -28,6 +28,7 @@ model Product {
   costPrice      Decimal?            @db.Decimal(10, 2)
   sellingPrice   Decimal?            @db.Decimal(10, 2)
   expiryDate     DateTime?
+  isArchived     Boolean             @default(false)
   purchaseItems  PurchaseOrderItem[]
   stockMovements StockMovement[]
   createdAt      DateTime            @default(now())

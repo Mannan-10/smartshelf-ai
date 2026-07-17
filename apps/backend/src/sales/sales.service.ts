@@ -124,6 +124,9 @@ export class SalesService {
             stockMovements: { include: { product: true } },
           },
         });
+      }, {
+        maxWait: 15000,
+        timeout: 25000,
       });
     } catch (error) {
       if (isPrismaError(error, 'P2002')) {

@@ -3,7 +3,7 @@ import { JwtAuthGuard } from "../common/guards/jwt-auth.guard.js";
 import { SalesService } from "./sales.service.js";
 import { CreateSaleDto } from "./dto/create-sale.dto.js";
 
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 @Controller('sales')
 export class SalesController {
     constructor(private readonly salesService: SalesService) { }

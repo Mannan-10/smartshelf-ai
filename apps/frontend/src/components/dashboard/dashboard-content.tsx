@@ -64,8 +64,10 @@ function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded bg-muted ${className}`} />;
 }
 
+import type { AppRole } from '@/lib/rbac';
+
 // ── Main dashboard client component ───────────────────────────────────────────
-function DashboardContent({ role, email }: { role: string; email: string }) {
+function DashboardContent({ role, email }: { role: AppRole; email: string }) {
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
