@@ -30,6 +30,36 @@ export const NavigationItems: NavigationItem[] = [
         roles: ALL_ROLES,
     },
     {
+        label: 'Vendors',
+        href: '/vendors',
+        description: 'Manage supplier and vendor details',
+        roles: ALL_ROLES,
+    },
+    {
+        label: 'Purchases',
+        href: '/purchases',
+        description: 'Manage purchase orders and restocks',
+        roles: ALL_ROLES,
+    },
+    {
+        label: 'Sales',
+        href: '/sales',
+        description: 'Manage sales and customer transactions',
+        roles: ALL_ROLES,
+    },
+    {
+        label: 'Forecast',
+        href: '/forecast',
+        description: 'AI-driven inventory predictions',
+        roles: ALL_ROLES,
+    },
+    {
+        label: 'Alerts',
+        href: '/alerts',
+        description: 'Low stock and expiry notifications',
+        roles: ALL_ROLES,
+    },
+    {
         label: 'Reports',
         href: '/reports',
         description: 'Profit, wastage, and demand reports',
@@ -46,36 +76,6 @@ export const NavigationItems: NavigationItem[] = [
         href: '/settings',
         description: 'Shop and account settings',
         roles: ['OWNER', 'ADMIN'],
-    },
-    {
-        label: 'Vendors',
-        href: '/vendors',
-        description: 'Manage supplier and vendor details',
-        roles: ALL_ROLES,
-    },
-    {
-        label: 'Sales',
-        href: '/sales',
-        description: 'Manage sales and customer transactions',
-        roles: ALL_ROLES,
-    },
-    {
-        label: 'Purchases',
-        href: '/purchases',
-        description: 'Manage purchase orders and restocks',
-        roles: ALL_ROLES,
-    },
-    {
-        label: 'Forecast',
-        href: '/forecast',
-        description: 'AI-driven inventory predictions',
-        roles: ALL_ROLES,
-    },
-    {
-        label: 'Alerts',
-        href: '/alerts',
-        description: 'Low stock and expiry notifications',
-        roles: ALL_ROLES,
     },
 ]
 

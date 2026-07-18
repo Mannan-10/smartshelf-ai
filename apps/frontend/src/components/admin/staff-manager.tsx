@@ -48,7 +48,7 @@ type User = {
 const staffSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6).optional().or(z.literal('')),
-  role: z.enum(['STAFF', 'MANAGER', 'ADMIN']),
+  role: z.enum(['STAFF', 'ADMIN']),
 });
 
 export function StaffManager() {
@@ -165,7 +165,6 @@ export function StaffManager() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="STAFF">Staff</SelectItem>
-                          <SelectItem value="MANAGER">Manager</SelectItem>
                           <SelectItem value="ADMIN">Admin</SelectItem>
                         </SelectContent>
                       </Select>

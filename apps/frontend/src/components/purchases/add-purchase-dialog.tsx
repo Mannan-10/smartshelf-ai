@@ -39,14 +39,17 @@ export function AddPurchaseDialog({ vendors, products, onSuccess }: AddPurchaseD
     });
 
     async function handleSubmit(values: PurchaseFormValues) {
-        const payload = {
+        const payload: any = {
             ...values,
             items: values.items.map(item => ({
                 productId: item.productId,
                 quantity: item.quantity,
-                unitPrice: (item as any).unitCost || 0,
+                unitCost: item.unitCost,
             }))
         };
+        if (!payload.vendorId) {
+            delete payload.vendorId;
+        }
         await purchasesApi.createPurchase(payload as any);
         form.reset();
         setOpen(false);

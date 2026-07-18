@@ -7,7 +7,7 @@ export const purchaseItemSchema = z.object({
 });
 
 export const purchaseSchema = z.object({
-    vendorId: z.string().min(1, 'Vendor ID is required'),
+    vendorId: z.string().optional(),
     notes: z.string().optional(),
     items: z.array(purchaseItemSchema).min(1, 'Add at least one item'),
 });

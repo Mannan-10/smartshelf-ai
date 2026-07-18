@@ -136,7 +136,7 @@ export class PurchasesService {
             batches: true, // NEW: include batches in response
           },
         });
-      });
+      }, { maxWait: 10000, timeout: 15000 });
     } catch (error) {
       if (isPrismaError(error, 'P2002')) {
         throw new ConflictException('Purchase order number already exists');
