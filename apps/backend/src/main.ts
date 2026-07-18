@@ -8,7 +8,7 @@ async function bootstrap() {
   const frontendUrl = process.env.FRONTEND_URL?.replace(/\/$/, '');
   
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       if (!origin || origin === 'http://localhost:3000' || origin === frontendUrl || origin.endsWith('.vercel.app')) {
         callback(null, true);
       } else {
