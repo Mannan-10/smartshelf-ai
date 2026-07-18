@@ -64,8 +64,8 @@ export function ProductTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-background">
-      <Table>
+    <div className="overflow-x-auto rounded-xl border bg-background">
+      <Table className="min-w-[800px]">
         <TableHeader>
           <TableRow>
             <TableHead>Product</TableHead>

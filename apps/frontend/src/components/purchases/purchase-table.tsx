@@ -34,7 +34,7 @@ export function PurchaseTable({ purchases }: PurchaseTableProps) {
     }
 
     return (
-        <Table>
+        <Table className="min-w-[800px]">
             <TableHeader>
                 <TableRow className="bg-muted/40 hover:bg-muted/40">
                     <TableHead className="font-semibold text-foreground">Date</TableHead>

@@ -25,7 +25,7 @@ export function SaleTable({ sales }: SaleTableProps) {
     }
 
     return (
-        <Table>
+        <Table className="min-w-[800px]">
             <TableHeader>
                 <TableRow>
                     <TableHead>Invoice</TableHead>
