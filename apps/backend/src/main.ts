@@ -5,14 +5,16 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Allow both local dev and production Vercel URL
-  const allowedOrigins = [
-    'http://localhost:3000',
-    process.env.FRONTEND_URL,        // e.g. https://smartshelf-ai.vercel.app
-  ].filter(Boolean) as string[];
-
+  const frontendUrl = process.env.FRONTEND_URL?.replace(/\/$/, '');
+  
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (!origin || origin === 'http://localhost:3000' || origin === frontendUrl || origin.endsWith('.vercel.app')) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     credentials: true,
   });
 
