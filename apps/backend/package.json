@@ -12,7 +12,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main.js",
+    "start:prod": "node dist/src/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "node -e \"const cp=require('child_process'); const jestBin=require.resolve('jest/bin/jest'); cp.spawnSync(process.execPath, ['--experimental-vm-modules', jestBin].concat(process.argv.slice(1)), { stdio: 'inherit' });\"",
     "test:watch": "node -e \"const cp=require('child_process'); const jestBin=require.resolve('jest/bin/jest'); cp.spawnSync(process.execPath, ['--experimental-vm-modules', jestBin, '--watch'].concat(process.argv.slice(1)), { stdio: 'inherit' });\"",
