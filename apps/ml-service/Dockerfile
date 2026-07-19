@@ -12,8 +12,8 @@ COPY main.py preprocess.py train.py forecast.py ./
 # Create directories
 RUN mkdir -p data models
 
-# Copy dataset if present (optional — /train endpoint will work without it)
-# COPY data/OnlineRetail.xlsx ./data/
+# Copy dataset if present
+COPY data/ ./data/
 
 # Expose FastAPI port (Railway will override this with its own PORT env var, but 8000 is standard)
 EXPOSE 8000
