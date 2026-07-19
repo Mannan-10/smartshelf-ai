@@ -18,5 +18,5 @@ COPY data/ ./data/
 # Expose FastAPI port (Railway will override this with its own PORT env var, but 8000 is standard)
 EXPOSE 8000
 
-# Start FastAPI on port 8000
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start FastAPI on the port assigned by Railway (fallback to 8000)
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
