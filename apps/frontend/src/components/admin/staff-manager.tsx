@@ -40,6 +40,7 @@ import { Badge } from '@/components/ui/badge';
 
 type User = {
   id: string;
+  name: string;
   email: string;
   role: string;
   createdAt: string;
@@ -48,7 +49,7 @@ type User = {
 const staffSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6).optional().or(z.literal('')),
-  role: z.enum(['STAFF', 'ADMIN']),
+  role: z.enum(['STAFF', 'ADMIN', 'OWNER']),
 });
 
 export function StaffManager() {
@@ -101,10 +102,35 @@ export function StaffManager() {
   const deleteUser = async (id: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
     try {
-      await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const error = await res.json();
+        alert(error.message || 'Failed to delete user');
+        return;
+      }
       loadUsers();
     } catch (e) {
       console.error(e);
+      alert('An unexpected error occurred while deleting user');
+    }
+  };
+
+  const updateRole = async (id: string, newRole: string) => {
+    try {
+      const res = await fetch(`/api/admin/users/${id}/role`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        alert(error.message || 'Failed to update role');
+        return;
+      }
+      loadUsers();
+    } catch (e) {
+      console.error(e);
+      alert('An unexpected error occurred while updating role');
     }
   };
 
@@ -166,6 +192,7 @@ export function StaffManager() {
                         <SelectContent>
                           <SelectItem value="STAFF">Staff</SelectItem>
                           <SelectItem value="ADMIN">Admin</SelectItem>
+                          <SelectItem value="OWNER">Owner</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -190,6 +217,7 @@ export function StaffManager() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Joined</TableHead>
@@ -204,11 +232,19 @@ export function StaffManager() {
             ) : (
               users.map(u => (
                 <TableRow key={u.id}>
-                  <TableCell className="font-medium">{u.email}</TableCell>
+                  <TableCell className="font-medium">{u.name}</TableCell>
+                  <TableCell>{u.email}</TableCell>
                   <TableCell>
-                    <Badge variant={u.role === 'ADMIN' || u.role === 'OWNER' ? 'default' : 'secondary'}>
-                      {u.role}
-                    </Badge>
+                    <Select defaultValue={u.role} onValueChange={(val) => updateRole(u.id, val)}>
+                      <SelectTrigger className="w-[120px] h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="STAFF">STAFF</SelectItem>
+                        <SelectItem value="ADMIN">ADMIN</SelectItem>
+                        <SelectItem value="OWNER">OWNER</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
                     {new Date(u.createdAt).toLocaleDateString()}

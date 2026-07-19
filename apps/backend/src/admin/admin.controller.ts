@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Param, Req, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Delete, Patch, Body, Param, Req, UseGuards } from "@nestjs/common";
 import { Roles } from "../common/decorators/roles.decorator.js";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard.js";
 import { RolesGuard } from "../common/guards/roles.guard.js";
@@ -30,5 +30,10 @@ export class AdminController {
     @Delete('users/:id')
     deleteUser(@Param('id') id: string, @Req() req: any) {
         return this.adminService.deleteUser(id, req.user);
+    }
+
+    @Patch('users/:id/role')
+    updateUserRole(@Param('id') id: string, @Body() body: { role: string }) {
+        return this.adminService.updateUserRole(id, body.role);
     }
 }

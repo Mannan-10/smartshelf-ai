@@ -116,4 +116,26 @@ export class AdminService {
       throw error;
     }
   }
+  async updateUserRole(id: string, newRole: string) {
+    const userToUpdate = await this.prisma.user.findUnique({ where: { id } });
+    if (!userToUpdate) {
+      throw new NotFoundException('User not found');
+    }
+
+    try {
+      const updated = await this.prisma.user.update({
+        where: { id },
+        data: { role: newRole as any },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        }
+      });
+      return updated;
+    } catch (error: any) {
+      throw error;
+    }
+  }
 }
