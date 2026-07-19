@@ -2,18 +2,21 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install dependencies first (better layer caching)
+# Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source
-COPY main.py preprocess.py ./
+# Copy source files
+COPY main.py preprocess.py train.py forecast.py ./
 
-# Create data directory (mount your dataset here)
-RUN mkdir -p data
+# Create directories
+RUN mkdir -p data models
 
-# Expose FastAPI port
+# Copy dataset if present (optional — /train endpoint will work without it)
+# COPY data/OnlineRetail.xlsx ./data/
+
+# Expose FastAPI port (Railway will override this with its own PORT env var, but 8000 is standard)
 EXPOSE 8000
 
-# Run with uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Start FastAPI on port 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,5 +1,6 @@
 """
 main.py — SmartShelf AI ML Service
+Configured for Hugging Face Spaces (port 7860)
 """
 
 import logging
@@ -15,7 +16,10 @@ from preprocess import load_and_preprocess
 from train import train, load_model
 from forecast import predict_demand
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s — %(message)s",
+)
 logger = logging.getLogger(__name__)
 
 app_state: dict[str, Any] = {
@@ -31,37 +35,56 @@ app_state: dict[str, Any] = {
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Starting SmartShelf ML service...")
+    logger.info("Starting SmartShelf ML service on Hugging Face Spaces...")
+
+    # Try loading dataset
     try:
         df = load_and_preprocess()
         app_state["features"] = df
         app_state["dataset_loaded"] = True
         logger.info("Dataset ready — %d products", len(df))
+    except FileNotFoundError as e:
+        app_state["dataset_error"] = str(e)
+        logger.warning("Dataset not found: %s", e)
     except Exception as e:
         app_state["dataset_error"] = str(e)
-        logger.warning("Dataset load failed: %s", e)
+        logger.error("Dataset load failed: %s", e)
 
+    # Try loading pre-trained model
     model, meta = load_model()
     if model is not None:
         app_state["model"] = model
         app_state["model_meta"] = meta
         app_state["model_loaded"] = True
-        logger.info("Pre-trained model loaded")
+        logger.info("Pre-trained model loaded from disk")
 
     yield
-    logger.info("Shutting down.")
+    logger.info("Shutting down ML service.")
 
 
-app = FastAPI(title="SmartShelf AI — ML Service", version="0.2.0", lifespan=lifespan)
+app = FastAPI(
+    title="SmartShelf AI — ML Service",
+    description="Demand forecasting for SmartShelf AI inventory management",
+    version="1.0.0",
+    lifespan=lifespan,
+)
 
+# Allow Vercel frontend + Railway backend + local dev
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_origins=[
+        "https://smartshelf-ai-one.vercel.app",
+        "https://backend-production-6af8.up.railway.app",
+        "http://localhost:3000",
+        "http://localhost:3001",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
+# ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @app.get("/health")
 def health():
@@ -77,9 +100,12 @@ def health():
 @app.post("/train")
 def train_model():
     if not app_state["dataset_loaded"]:
-        raise HTTPException(status_code=503, detail=app_state["dataset_error"] or "Dataset not loaded")
+        raise HTTPException(
+            status_code=503,
+            detail=app_state["dataset_error"] or "Dataset not loaded. Upload OnlineRetail.xlsx to data/ folder.",
+        )
     if app_state["training_in_progress"]:
-        raise HTTPException(status_code=409, detail="Training already in progress")
+        raise HTTPException(status_code=409, detail="Training already in progress.")
 
     app_state["training_in_progress"] = True
     try:
@@ -98,7 +124,10 @@ def train_model():
 @app.get("/model/info")
 def model_info():
     if not app_state["model_loaded"]:
-        raise HTTPException(status_code=404, detail="No model found. Call POST /train first.")
+        raise HTTPException(
+            status_code=404,
+            detail="No trained model found. Call POST /train first."
+        )
     return app_state["model_meta"]
 
 
@@ -148,8 +177,15 @@ class ForecastRequest(BaseModel):
 @app.post("/forecast")
 def forecast(request: ForecastRequest):
     if not app_state["model_loaded"]:
-        raise HTTPException(status_code=404, detail="No model. Call POST /train first.")
-    return predict_demand(app_state["model"], app_state["model_meta"], request.to_feature_dict())
+        raise HTTPException(
+            status_code=404,
+            detail="No model found. Call POST /train first."
+        )
+    return predict_demand(
+        app_state["model"],
+        app_state["model_meta"],
+        request.to_feature_dict(),
+    )
 
 
 @app.get("/dataset/summary")
