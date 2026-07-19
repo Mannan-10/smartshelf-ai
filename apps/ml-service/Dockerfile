@@ -15,6 +15,9 @@ RUN mkdir -p data models
 # Copy dataset if present
 COPY data/ ./data/
 
+# Copy pre-trained models if present
+COPY models/ ./models/
+
 # Expose FastAPI port (Railway will override this with its own PORT env var, but 8000 is standard)
 EXPOSE 8000
 
