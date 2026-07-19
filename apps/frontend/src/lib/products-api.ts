@@ -1,4 +1,4 @@
-import type { Category, Product, ProductPayload } from "@/types/product";
+import type { Category, CategoryPayload, Product, ProductPayload } from "@/types/product";
 
 async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(url, {
@@ -26,6 +26,26 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
 export const productsApi = {
   getCategories: () => {
     return apiRequest<Category[]>("/api/categories");
+  },
+
+  createCategory: (payload: CategoryPayload) => {
+    return apiRequest<Category>("/api/categories", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  updateCategory: (id: string, payload: CategoryPayload) => {
+    return apiRequest<Category>(`/api/categories/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  deleteCategory: (id: string) => {
+    return apiRequest<void>(`/api/categories/${id}`, {
+      method: "DELETE",
+    });
   },
 
   getProducts: () => {

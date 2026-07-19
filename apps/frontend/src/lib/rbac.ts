@@ -24,6 +24,12 @@ export const NavigationItems: NavigationItem[] = [
         roles: ALL_ROLES,
     },
     {
+        label: 'Categories',
+        href: '/categories',
+        description: 'Manage product categories',
+        roles: ALL_ROLES,
+    },
+    {
         label: 'Inventory',
         href: '/inventory',
         description: 'Stock, reorder, and expiry tracking',
