@@ -8,28 +8,13 @@ import { AdminService } from "./admin.service.js";
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN, Role.OWNER)
+@Roles(Role.ADMIN)
 export class AdminController {
     constructor(private readonly adminService: AdminService) {}
 
     @Get('overview')
     getAdminOverview(@Req() req: any) {
-        return {
-            message: 'Admin overview accessed successfully',
-            user: req.user,
-            permissions: {
-                canManageProducts: true,
-                canManageStaff: true, 
-                canViewReports: true,
-                canAccessAdminPanel: true,
-            },
-            stats: {
-                totalProducts: 0,
-                lowStockItems: 0,
-                expiryAlerts: 0,
-                totalSalesToday: 0,
-            },
-        };
+        return this.adminService.getAdminOverview(req.user);
     }
 
     @Get('users')

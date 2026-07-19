@@ -45,13 +45,13 @@ export default async function AdminPage() {
     redirect('/login');
   }
 
-  if (!isAdminRole(user.role)) {
+  if (user.role !== 'ADMIN') {
     return (
       <main className="flex min-h-screen items-center justify-center px-6">
         <div className="max-w-md rounded-xl border bg-background p-6 text-center shadow-sm">
           <h1 className="text-2xl font-bold">403 Forbidden</h1>
           <p className="mt-3 text-muted-foreground">
-            You do not have permission to access the admin page.
+            You do not have permission to access the admin page. (Restricted to ADMIN role only)
           </p>
         </div>
       </main>

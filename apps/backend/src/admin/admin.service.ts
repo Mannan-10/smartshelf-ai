@@ -7,6 +7,52 @@ import { Role } from '../common/enums/role.enum.js';
 export class AdminService {
   constructor(private prisma: PrismaService) {}
 
+  async getAdminOverview(user: any) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+
+    const totalProducts = await this.prisma.product.count({ where: { isArchived: false } });
+    
+    const products = await this.prisma.product.findMany({
+      where: { isArchived: false },
+      select: { stock: true, reorderLevel: true }
+    });
+    const lowStockItems = products.filter(p => p.stock <= p.reorderLevel).length;
+
+    const expiryAlerts = await this.prisma.product.count({
+      where: {
+        isArchived: false,
+        expiryDate: { lte: thirtyDaysFromNow, gte: today }
+      }
+    });
+
+    const salesTodayList = await this.prisma.sale.findMany({
+      where: { saleDate: { gte: today } },
+      select: { totalAmount: true }
+    });
+    const totalSalesToday = salesTodayList.reduce((sum, sale) => sum + sale.totalAmount, 0);
+
+    return {
+        message: 'Admin overview accessed successfully',
+        user: user,
+        permissions: {
+            canManageProducts: true,
+            canManageStaff: true, 
+            canViewReports: true,
+            canAccessAdminPanel: true,
+        },
+        stats: {
+            totalProducts,
+            lowStockItems,
+            expiryAlerts,
+            totalSalesToday,
+        },
+    };
+  }
+
   async getUsers() {
     return this.prisma.user.findMany({
       select: {

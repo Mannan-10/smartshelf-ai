@@ -75,7 +75,7 @@ export const NavigationItems: NavigationItem[] = [
         label: 'Admin',
         href: '/admin',
         description: 'Admin-only controls and staff management',
-        roles: ['OWNER', 'ADMIN'],
+        roles: ['ADMIN'],
     },
     {
         label: 'Settings',
