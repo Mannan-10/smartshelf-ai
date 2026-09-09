@@ -4,8 +4,10 @@ import { FallbackForecastService } from './fallback-forecast.service.js';
 import { PrismaService } from '../prisma.service.js';
 import { StockMovementType } from '../generated/prisma/client.js';
 
+const mockStoreId = 'store-1';
 const mockProduct = {
   id: 'prod-1',
+  storeId: mockStoreId,
   name: 'Parachute Oil',
   sku: 'OIL-001',
   stock: 50,
@@ -18,7 +20,7 @@ const mockMovements = [
 ];
 
 const mockPrisma = {
-  product: { findUnique: jest.fn() },
+  product: { findFirst: jest.fn(), findUnique: jest.fn() },
   stockMovement: { findMany: jest.fn() },
 };
 
@@ -39,10 +41,10 @@ describe('FallbackForecastService', () => {
 
   describe('forecastProduct', () => {
     it('should return fallback forecast with 7-day rolling average', async () => {
-      mockPrisma.product.findUnique.mockResolvedValue(mockProduct);
+      mockPrisma.product.findFirst.mockResolvedValue(mockProduct);
       mockPrisma.stockMovement.findMany.mockResolvedValue(mockMovements);
 
-      const result = await service.forecastProduct('prod-1');
+      const result = await service.forecastProduct(mockStoreId, 'prod-1');
 
       expect(result).not.toBeNull();
       expect(result!.fallback).toBe(true);
@@ -51,51 +53,52 @@ describe('FallbackForecastService', () => {
     });
 
     it('should return null if product not found', async () => {
-      mockPrisma.product.findUnique.mockResolvedValue(null);
+      mockPrisma.product.findFirst.mockResolvedValue(null);
 
-      const result = await service.forecastProduct('nonexistent');
+      const result = await service.forecastProduct(mockStoreId, 'nonexistent');
 
       expect(result).toBeNull();
     });
 
     it('should return 0 avg when no sales in last 7 days', async () => {
-      mockPrisma.product.findUnique.mockResolvedValue(mockProduct);
+      mockPrisma.product.findFirst.mockResolvedValue(mockProduct);
       mockPrisma.stockMovement.findMany.mockResolvedValue([]);
 
-      const result = await service.forecastProduct('prod-1');
+      const result = await service.forecastProduct(mockStoreId, 'prod-1');
 
       expect(result!.forecast.avgDailyQuantity).toBe(0);
       expect(result!.forecast.forecastTotal7Days).toBe(0);
     });
 
     it('should set daysUntilStockout to null when avgDailyQuantity is 0', async () => {
-      mockPrisma.product.findUnique.mockResolvedValue(mockProduct);
+      mockPrisma.product.findFirst.mockResolvedValue(mockProduct);
       mockPrisma.stockMovement.findMany.mockResolvedValue([]);
 
-      const result = await service.forecastProduct('prod-1');
+      const result = await service.forecastProduct(mockStoreId, 'prod-1');
 
       expect(result!.forecast.daysUntilStockout).toBeNull();
     });
 
     it('should set reorderRecommended true when stock <= reorderLevel', async () => {
-      mockPrisma.product.findUnique.mockResolvedValue({ ...mockProduct, stock: 5 });
+      mockPrisma.product.findFirst.mockResolvedValue({ ...mockProduct, stock: 5 });
       mockPrisma.stockMovement.findMany.mockResolvedValue(mockMovements);
 
-      const result = await service.forecastProduct('prod-1');
+      const result = await service.forecastProduct(mockStoreId, 'prod-1');
 
       expect(result!.forecast.reorderRecommended).toBe(true);
     });
 
     it('should query only SALE type movements from last 7 days', async () => {
-      mockPrisma.product.findUnique.mockResolvedValue(mockProduct);
+      mockPrisma.product.findFirst.mockResolvedValue(mockProduct);
       mockPrisma.stockMovement.findMany.mockResolvedValue([]);
 
-      await service.forecastProduct('prod-1');
+      await service.forecastProduct(mockStoreId, 'prod-1');
 
       expect(mockPrisma.stockMovement.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             productId: 'prod-1',
+            storeId: mockStoreId,
             type: StockMovementType.SALE,
           }),
         }),
@@ -103,10 +106,10 @@ describe('FallbackForecastService', () => {
     });
 
     it('should include fallbackReason in response', async () => {
-      mockPrisma.product.findUnique.mockResolvedValue(mockProduct);
+      mockPrisma.product.findFirst.mockResolvedValue(mockProduct);
       mockPrisma.stockMovement.findMany.mockResolvedValue([]);
 
-      const result = await service.forecastProduct('prod-1');
+      const result = await service.forecastProduct(mockStoreId, 'prod-1');
 
       expect(result!.fallbackReason).toBeDefined();
       expect(typeof result!.fallbackReason).toBe('string');

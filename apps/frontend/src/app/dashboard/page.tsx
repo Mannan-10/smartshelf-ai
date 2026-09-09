@@ -6,5 +6,5 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  return <DashboardContent role={user.role} email={user.email} />;
+  return <DashboardContent role={user.role} email={user.email} storeName={user.storeName} />;
 }

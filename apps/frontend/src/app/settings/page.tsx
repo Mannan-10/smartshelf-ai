@@ -16,7 +16,7 @@ export default async function SettingsPage() {
   }
 
   return (
-    <AppShell role={user.role} email={user.email}>
+    <AppShell role={user.role} email={user.email} storeName={user.storeName}>
       <SettingsManager />
     </AppShell>
   );

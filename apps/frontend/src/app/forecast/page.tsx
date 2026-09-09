@@ -8,7 +8,7 @@ export default async function ForecastPage() {
   if (!user) redirect('/login');
 
   return (
-    <AppShell role={user.role} email={user.email}>
+    <AppShell role={user.role} email={user.email} storeName={user.storeName}>
       <ForecastManager />
     </AppShell>
   );

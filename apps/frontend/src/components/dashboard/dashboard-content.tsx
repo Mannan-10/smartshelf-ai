@@ -67,7 +67,7 @@ function Skeleton({ className }: { className?: string }) {
 import type { AppRole } from '@/lib/rbac';
 
 // ── Main dashboard client component ───────────────────────────────────────────
-function DashboardContent({ role, email }: { role: AppRole; email: string }) {
+function DashboardContent({ role, email, storeName }: { role: AppRole; email: string; storeName?: string | null }) {
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +90,7 @@ function DashboardContent({ role, email }: { role: AppRole; email: string }) {
   const isAdmin = role === 'OWNER' || role === 'ADMIN';
 
   return (
-    <AppShell role={role} email={email}>
+    <AppShell role={role} email={email} storeName={storeName}>
       <div className="space-y-6">
 
         {/* Welcome */}

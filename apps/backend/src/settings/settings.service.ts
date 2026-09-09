@@ -6,24 +6,47 @@ import { UpdateSettingsDto } from './dto/update-settings.dto.js';
 export class SettingsService {
   constructor(private prisma: PrismaService) {}
 
-  async getSettings() {
-    let settings = await this.prisma.shopSettings.findFirst();
-    if (!settings) {
-      settings = await this.prisma.shopSettings.create({
+  async getSettings(storeId: string) {
+    let store = await this.prisma.store.findUnique({
+      where: { id: storeId },
+    });
+
+    if (!store) {
+      store = await this.prisma.store.create({
         data: {
-          shopName: 'My Shop',
-          currency: 'USD',
+          id: storeId,
+          name: 'My Shop',
+          currency: 'INR',
         },
       });
     }
-    return settings;
+
+    return {
+      id: store.id,
+      shopName: store.name,
+      currency: store.currency,
+      contactEmail: store.contactEmail,
+      address: store.address,
+    };
   }
 
-  async updateSettings(dto: UpdateSettingsDto) {
-    const settings = await this.getSettings();
-    return this.prisma.shopSettings.update({
-      where: { id: settings.id },
-      data: dto,
+  async updateSettings(storeId: string, dto: UpdateSettingsDto) {
+    const updated = await this.prisma.store.update({
+      where: { id: storeId },
+      data: {
+        ...(dto.shopName ? { name: dto.shopName } : {}),
+        ...(dto.currency ? { currency: dto.currency } : {}),
+        ...(dto.contactEmail !== undefined ? { contactEmail: dto.contactEmail } : {}),
+        ...(dto.address !== undefined ? { address: dto.address } : {}),
+      },
     });
+
+    return {
+      id: updated.id,
+      shopName: updated.name,
+      currency: updated.currency,
+      contactEmail: updated.contactEmail,
+      address: updated.address,
+    };
   }
 }

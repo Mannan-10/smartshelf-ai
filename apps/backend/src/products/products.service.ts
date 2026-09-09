@@ -31,28 +31,30 @@ function isPrismaError(error: any, code: string) {
 export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async validateCategory(categoryId: string | null | undefined) {
+  private async validateCategory(storeId: string, categoryId: string | null | undefined) {
     if (categoryId === undefined || categoryId === null) {
       return;
     }
 
-    const category = await this.prisma.category.findUnique({
+    const category = await this.prisma.category.findFirst({
       where: {
         id: categoryId,
+        storeId,
       },
     });
 
     if (!category) {
-      throw new BadRequestException('Category does not exist');
+      throw new BadRequestException('Category does not exist in this store');
     }
   }
 
-  async create(createProductDto: CreateProductDto) {
-    await this.validateCategory(createProductDto.categoryId);
+  async create(storeId: string, createProductDto: CreateProductDto) {
+    await this.validateCategory(storeId, createProductDto.categoryId);
 
     try {
       return await this.prisma.product.create({
         data: {
+          storeId,
           name: createProductDto.name,
           sku: createProductDto.sku,
           description: createProductDto.description,
@@ -71,16 +73,19 @@ export class ProductsService {
       });
     } catch (error) {
       if (isPrismaError(error, 'P2002')) {
-        throw new ConflictException('Product SKU already exists');
+        throw new ConflictException('Product SKU already exists in this store');
       }
 
       throw error;
     }
   }
 
-  async findAll() {
+  async findAll(storeId: string) {
     return this.prisma.product.findMany({
-      where: { isArchived: false },
+      where: {
+        storeId,
+        isArchived: false,
+      },
       include: {
         category: true,
       },
@@ -88,10 +93,11 @@ export class ProductsService {
     });
   }
 
-  async findOne(id: string) {
-    const product = await this.prisma.product.findUnique({
+  async findOne(storeId: string, id: string) {
+    const product = await this.prisma.product.findFirst({
       where: {
         id,
+        storeId,
       },
       include: {
         category: true,
@@ -99,14 +105,17 @@ export class ProductsService {
     });
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundException('Product not found in this store');
     }
 
     return product;
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto) {
-    await this.validateCategory(updateProductDto.categoryId);
+  async update(storeId: string, id: string, updateProductDto: UpdateProductDto) {
+    await this.validateCategory(storeId, updateProductDto.categoryId);
+
+    // Verify product belongs to store
+    await this.findOne(storeId, id);
 
     try {
       return await this.prisma.product.update({
@@ -139,14 +148,16 @@ export class ProductsService {
       }
 
       if (isPrismaError(error, 'P2002')) {
-        throw new ConflictException('Product SKU already exists');
+        throw new ConflictException('Product SKU already exists in this store');
       }
 
       throw error;
     }
   }
 
-  async remove(id: string) {
+  async remove(storeId: string, id: string) {
+    await this.findOne(storeId, id);
+
     try {
       await this.prisma.product.update({
         where: { id },
@@ -161,36 +172,36 @@ export class ProductsService {
     }
   }
 
-  async getBatches(productId: string) {
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
+  async getBatches(storeId: string, productId: string) {
+    const product = await this.prisma.product.findFirst({
+      where: { id: productId, storeId },
       select: { id: true, name: true, sku: true },
     });
 
-    if (!product) throw new NotFoundException('Product not found');
+    if (!product) throw new NotFoundException('Product not found in this store');
 
     const batches = await this.prisma.productBatch.findMany({
-      where: { productId, quantity: { gt: 0 } },
+      where: { productId, storeId, quantity: { gt: 0 } },
       include: { purchaseOrder: { select: { orderNumber: true, orderDate: true } } },
-      orderBy: [{ expiryDate: 'asc'}, { receivedAt: 'asc' }],
+      orderBy: [{ expiryDate: 'asc' }, { receivedAt: 'asc' }],
     });
 
     return { product, batches };
   }
 
-  async adjustStock(id: string, adjustStockDto: AdjustStockDto) {
+  async adjustStock(storeId: string, id: string, adjustStockDto: AdjustStockDto) {
     const { quantityChange, note } = adjustStockDto;
     if (quantityChange === 0) {
       throw new BadRequestException('Quantity change cannot be zero');
     }
 
     return this.prisma.$transaction(async (tx) => {
-      const product = await tx.product.findUnique({
-        where: { id },
+      const product = await tx.product.findFirst({
+        where: { id, storeId },
       });
 
       if (!product) {
-        throw new NotFoundException('Product not found');
+        throw new NotFoundException('Product not found in this store');
       }
 
       if (product.stock + quantityChange < 0) {
@@ -207,6 +218,7 @@ export class ProductsService {
 
       await tx.stockMovement.create({
         data: {
+          storeId,
           productId: id,
           type: StockMovementType.ADJUSTMENT,
           quantityChange,
@@ -215,11 +227,6 @@ export class ProductsService {
           note,
         },
       });
-
-      // Simple handling for batches on adjustment:
-      // We don't adjust specific batches here to keep it simple, 
-      // but in a fully-fledged ERP you would select which batch to adjust.
-      // We assume adjustments do not affect existing purchase batches directly for this MVP.
 
       return updatedProduct;
     });

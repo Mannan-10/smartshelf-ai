@@ -20,6 +20,12 @@ export const registerSchema = z.object({
         .min(2, "Name must be at least 2 characters long")
         .max(50, "Name must be less than 50 characters long"),
 
+    storeName: z
+        .string()
+        .trim()
+        .min(2, "Store name must be at least 2 characters long")
+        .max(60, "Store name must be less than 60 characters long"),
+
     email: z
         .string()
         .trim()

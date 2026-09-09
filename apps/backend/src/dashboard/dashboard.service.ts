@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma.service.js';
 export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getSummary() {
+  async getSummary(storeId: string) {
     const now = new Date();
     const in30Days = new Date();
     in30Days.setDate(in30Days.getDate() + 30);
@@ -18,72 +18,86 @@ export class DashboardService {
       expiringCount,
       totalSales,
       monthlySales,
-      topProducts,
       recentSales,
+      saleItems,
     ] = await Promise.all([
-      // Total product count
-      this.prisma.product.count(),
+      // Total product count in this store
+      this.prisma.product.count({
+        where: { storeId, isArchived: false },
+      }),
 
-      // All products to calculate low stock (column-to-column comparison)
+      // Products to calculate low stock
       this.prisma.product.findMany({
+        where: { storeId, isArchived: false },
         select: { stock: true, reorderLevel: true },
       }),
 
-      // Expiring within 30 days
+      // Expiring within 30 days in this store
       this.prisma.product.count({
         where: {
+          storeId,
+          isArchived: false,
           expiryDate: { not: null, gte: now, lte: in30Days },
         },
       }),
 
-      // Total sales count + revenue (all time)
+      // Total sales count + revenue (all time) in this store
       this.prisma.sale.aggregate({
+        where: { storeId },
         _count: { id: true },
         _sum: { totalAmount: true },
       }),
 
-      // This month's sales count + revenue
+      // This month's sales count + revenue in this store
       this.prisma.sale.aggregate({
-        where: { createdAt: { gte: startOfMonth } },
+        where: { storeId, createdAt: { gte: startOfMonth } },
         _count: { id: true },
         _sum: { totalAmount: true },
       }),
 
-      // Top 5 products by quantity sold
-      this.prisma.saleItem.groupBy({
-        by: ['productId'],
-        _sum: { quantity: true, totalPrice: true },
-        orderBy: { _sum: { quantity: 'desc' } },
-        take: 5,
-      }),
-
-      // 5 most recent sales
+      // 5 most recent sales in this store
       this.prisma.sale.findMany({
+        where: { storeId },
         orderBy: { createdAt: 'desc' },
         take: 5,
         include: {
           items: { include: { product: { select: { name: true } } } },
         },
       }),
+
+      // Sale items in this store to calculate top products
+      this.prisma.saleItem.findMany({
+        where: { sale: { storeId } },
+        select: {
+          productId: true,
+          quantity: true,
+          totalPrice: true,
+          product: { select: { id: true, name: true, sku: true } },
+        },
+      }),
     ]);
 
     const lowStockCount = allProducts.filter((p) => p.stock <= p.reorderLevel).length;
 
-    // Hydrate top products with product names
-    const productIds = topProducts.map((t) => t.productId);
-    const productNames = await this.prisma.product.findMany({
-      where: { id: { in: productIds } },
-      select: { id: true, name: true, sku: true },
-    });
-    const nameMap = Object.fromEntries(productNames.map((p) => [p.id, p]));
+    // Aggregate top products in memory (safe and relation-filtered)
+    const productSalesMap = new Map<string, { productId: string; name: string; sku: string; totalQuantitySold: number; totalRevenue: number }>();
 
-    const topProductsHydrated = topProducts.map((t) => ({
-      productId: t.productId,
-      name: nameMap[t.productId]?.name ?? 'Unknown',
-      sku: nameMap[t.productId]?.sku ?? '',
-      totalQuantitySold: t._sum.quantity ?? 0,
-      totalRevenue: t._sum.totalPrice ?? 0,
-    }));
+    for (const item of saleItems) {
+      const existing = productSalesMap.get(item.productId) || {
+        productId: item.productId,
+        name: item.product?.name ?? 'Unknown',
+        sku: item.product?.sku ?? '',
+        totalQuantitySold: 0,
+        totalRevenue: 0,
+      };
+      existing.totalQuantitySold += item.quantity;
+      existing.totalRevenue += item.totalPrice;
+      productSalesMap.set(item.productId, existing);
+    }
+
+    const topProductsHydrated = Array.from(productSalesMap.values())
+      .sort((a, b) => b.totalQuantitySold - a.totalQuantitySold)
+      .slice(0, 5);
 
     return {
       products: {
@@ -106,26 +120,23 @@ export class DashboardService {
     };
   }
 
-  async getWeeklySalesTrend() {
-    // Get last 8 weeks of daily sales data
+  async getWeeklySalesTrend(storeId: string) {
     const since = new Date();
     since.setDate(since.getDate() - 56); // 8 weeks back
 
     const sales = await this.prisma.sale.findMany({
-      where: { createdAt: { gte: since } },
+      where: { storeId, createdAt: { gte: since } },
       select: { createdAt: true, totalAmount: true },
       orderBy: { createdAt: 'asc' },
     });
 
-    // Group by week (ISO week string: "2026-W01")
     const weekMap: Record<string, { week: string; revenue: number; count: number }> = {};
 
     for (const sale of sales) {
       const date = new Date(sale.createdAt);
-      // Get Monday of that week
       const monday = new Date(date);
       monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
-      const weekKey = monday.toISOString().slice(0, 10); // "2026-06-29"
+      const weekKey = monday.toISOString().slice(0, 10);
 
       if (!weekMap[weekKey]) {
         weekMap[weekKey] = { week: weekKey, revenue: 0, count: 0 };

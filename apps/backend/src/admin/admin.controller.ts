@@ -4,7 +4,7 @@ import { JwtAuthGuard } from "../common/guards/jwt-auth.guard.js";
 import { RolesGuard } from "../common/guards/roles.guard.js";
 import { Role } from "../common/enums/role.enum.js";
 import { AdminService } from "./admin.service.js";
-
+import { CurrentStore } from "../common/decorators/current-store.decorator.js";
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -13,27 +13,41 @@ export class AdminController {
     constructor(private readonly adminService: AdminService) {}
 
     @Get('overview')
-    getAdminOverview(@Req() req: any) {
-        return this.adminService.getAdminOverview(req.user);
+    getAdminOverview(
+        @CurrentStore() storeId: string,
+        @Req() req: any,
+    ) {
+        return this.adminService.getAdminOverview(storeId, req.user);
     }
 
     @Get('users')
-    getUsers() {
-        return this.adminService.getUsers();
+    getUsers(@CurrentStore() storeId: string) {
+        return this.adminService.getUsers(storeId);
     }
 
     @Post('users')
-    createUser(@Body() body: { email: string; password?: string; role: string }) {
-        return this.adminService.createUser(body);
+    createUser(
+        @CurrentStore() storeId: string,
+        @Body() body: { email: string; password?: string; role: string },
+    ) {
+        return this.adminService.createUser(storeId, body);
     }
 
     @Delete('users/:id')
-    deleteUser(@Param('id') id: string, @Req() req: any) {
-        return this.adminService.deleteUser(id, req.user);
+    deleteUser(
+        @CurrentStore() storeId: string,
+        @Param('id') id: string,
+        @Req() req: any,
+    ) {
+        return this.adminService.deleteUser(storeId, id, req.user);
     }
 
     @Patch('users/:id/role')
-    updateUserRole(@Param('id') id: string, @Body() body: { role: string }) {
-        return this.adminService.updateUserRole(id, body.role);
+    updateUserRole(
+        @CurrentStore() storeId: string,
+        @Param('id') id: string,
+        @Body() body: { role: string },
+    ) {
+        return this.adminService.updateUserRole(storeId, id, body.role);
     }
 }

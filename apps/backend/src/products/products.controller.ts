@@ -15,6 +15,7 @@ import { CreateProductDto } from './dto/create-product.dto.js';
 import { UpdateProductDto } from './dto/update-product.dto.js';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 import { AdjustStockDto } from './dto/adjust-stock.dto.js';
+import { CurrentStore } from '../common/decorators/current-store.decorator.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('products')
@@ -23,38 +24,58 @@ export class ProductsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
+  create(
+    @CurrentStore() storeId: string,
+    @Body() createProductDto: CreateProductDto,
+  ) {
+    return this.productsService.create(storeId, createProductDto);
   }
 
   @Get()
-  findAll() {
-    return this.productsService.findAll();
+  findAll(@CurrentStore() storeId: string) {
+    return this.productsService.findAll(storeId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.productsService.findOne(id);
+  findOne(
+    @CurrentStore() storeId: string,
+    @Param('id') id: string,
+  ) {
+    return this.productsService.findOne(storeId, id);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productsService.update(id, updateProductDto);
+  update(
+    @CurrentStore() storeId: string,
+    @Param('id') id: string,
+    @Body() updateProductDto: UpdateProductDto,
+  ) {
+    return this.productsService.update(storeId, id, updateProductDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string) {
-    return this.productsService.remove(id);
+  remove(
+    @CurrentStore() storeId: string,
+    @Param('id') id: string,
+  ) {
+    return this.productsService.remove(storeId, id);
   }
 
   @Get(':id/batches')
-  getBatches(@Param('id') id: string) {
-    return this.productsService.getBatches(id);
+  getBatches(
+    @CurrentStore() storeId: string,
+    @Param('id') id: string,
+  ) {
+    return this.productsService.getBatches(storeId, id);
   }
 
   @Post(':id/adjust')
-  adjustStock(@Param('id') id: string, @Body() adjustStockDto: AdjustStockDto) {
-    return this.productsService.adjustStock(id, adjustStockDto);
+  adjustStock(
+    @CurrentStore() storeId: string,
+    @Param('id') id: string,
+    @Body() adjustStockDto: AdjustStockDto,
+  ) {
+    return this.productsService.adjustStock(storeId, id, adjustStockDto);
   }
 }

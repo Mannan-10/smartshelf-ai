@@ -9,7 +9,7 @@ export default async function AlertsPage() {
   if (!user) redirect('/login');
 
   return (
-    <AppShell role={user.role} email={user.email}>
+    <AppShell role={user.role} email={user.email} storeName={user.storeName}>
       <Suspense>
         <AlertsManager />
       </Suspense>

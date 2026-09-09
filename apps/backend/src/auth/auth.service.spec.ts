@@ -8,18 +8,31 @@ import { PrismaService } from '../prisma.service.js';
 import { Role } from '../common/enums/role.enum.js';
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
+const mockStore = {
+  id: 'store-1',
+  name: "Test User's Shop",
+};
+
 const mockUser = {
   id: 'user-1',
   name: 'Test User',
   email: 'test@example.com',
   passwordHash: bcrypt.hashSync('password123', 1),
   role: Role.OWNER,
+  storeId: 'store-1',
+  store: mockStore,
 };
 
 const mockPrisma = {
   user: {
     findUnique: jest.fn(),
     create: jest.fn(),
+    update: jest.fn(),
+  },
+  store: {
+    create: jest.fn(),
+    findFirst: jest.fn(),
+    findUnique: jest.fn(),
   },
 };
 
@@ -54,6 +67,7 @@ describe('AuthService', () => {
 
     it('should register a new user and return accessToken', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.store.create.mockResolvedValue(mockStore);
       mockPrisma.user.create.mockResolvedValue(mockUser);
 
       const result = await service.register(registerDto);
@@ -61,10 +75,12 @@ describe('AuthService', () => {
       expect(result.accessToken).toBe('mock-jwt-token');
       expect(result.user.email).toBe('test@example.com');
       expect(result.message).toBe('User registered successfully');
+      expect(result.user.storeId).toBe('store-1');
     });
 
     it('should lowercase the email before saving', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.store.create.mockResolvedValue(mockStore);
       mockPrisma.user.create.mockResolvedValue(mockUser);
 
       await service.register(registerDto);
@@ -76,6 +92,7 @@ describe('AuthService', () => {
 
     it('should hash the password before saving', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.store.create.mockResolvedValue(mockStore);
       mockPrisma.user.create.mockResolvedValue(mockUser);
 
       await service.register(registerDto);
@@ -94,6 +111,7 @@ describe('AuthService', () => {
 
     it('should default role to OWNER if not provided', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.store.create.mockResolvedValue(mockStore);
       mockPrisma.user.create.mockResolvedValue(mockUser);
 
       await service.register(registerDto);
@@ -116,6 +134,7 @@ describe('AuthService', () => {
       expect(result.accessToken).toBe('mock-jwt-token');
       expect(result.message).toBe('Login successful');
       expect(result.user.email).toBe(mockUser.email);
+      expect(result.user.storeId).toBe('store-1');
     });
 
     it('should throw UnauthorizedException if user not found', async () => {
@@ -138,6 +157,7 @@ describe('AuthService', () => {
 
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: { email: 'test@example.com' },
+        include: { store: true },
       });
     });
   });

@@ -5,6 +5,8 @@ export type AuthUser = {
     name: string;
     email: string;
     role?: string;
+    storeId?: string | null;
+    storeName?: string | null;
 };
 
 export type AuthResponse = {
@@ -41,6 +43,7 @@ export const apiClient = {
             name: values.name,
             email: values.email,
             password: values.password,
+            storeName: values.storeName,
         };
 
         return apiRequest<AuthResponse>(`/auth/register`, {

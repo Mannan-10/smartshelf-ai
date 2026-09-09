@@ -11,17 +11,17 @@ export class ForecastService {
     private readonly fallback: FallbackForecastService,
   ) {}
 
-  async forecastProduct(productId: string) {
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
+  async forecastProduct(storeId: string, productId: string) {
+    const product = await this.prisma.product.findFirst({
+      where: { id: productId, storeId },
       include: {
         saleItems: {
-          include: { sale: { select: { saleDate: true } } },
+          include: { sale: { select: { saleDate: true, storeId: true } } },
         },
       },
     });
 
-    if (!product) throw new NotFoundException('Product not found');
+    if (!product) throw new NotFoundException('Product not found in this store');
 
     // Build feature vector from real product data
     const saleItems = product.saleItems;
@@ -90,21 +90,22 @@ export class ForecastService {
 
     } catch {
       // ML service is down or timed out — use rule-based fallback
-      const fallbackResult = await this.fallback.forecastProduct(productId);
-      if (!fallbackResult) throw new NotFoundException('Product not found');
+      const fallbackResult = await this.fallback.forecastProduct(storeId, productId);
+      if (!fallbackResult) throw new NotFoundException('Product not found in this store');
       return fallbackResult;
     }
   }
 
-  async forecastAll() {
+  async forecastAll(storeId: string) {
     const products = await this.prisma.product.findMany({
+      where: { storeId, isArchived: false },
       take: 20,
       orderBy: { stock: 'asc' },
       select: { id: true },
     });
 
     const results = await Promise.allSettled(
-      products.map((p) => this.forecastProduct(p.id)),
+      products.map((p) => this.forecastProduct(storeId, p.id)),
     );
 
     return results

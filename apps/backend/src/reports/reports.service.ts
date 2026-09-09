@@ -4,7 +4,6 @@ import { PrismaService } from '../prisma.service.js';
 function escapeCsv(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return '';
   const str = String(value);
-  // Wrap in quotes if contains comma, quote, or newline
   if (str.includes(',') || str.includes('"') || str.includes('\n')) {
     return `"${str.replace(/"/g, '""')}"`;
   }
@@ -28,8 +27,9 @@ function formatDate(date: Date | string | null | undefined): string {
 export class ReportsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async generateSalesCsv(): Promise<string> {
+  async generateSalesCsv(storeId: string): Promise<string> {
     const sales = await this.prisma.sale.findMany({
+      where: { storeId },
       orderBy: { saleDate: 'desc' },
       include: {
         items: { include: { product: { select: { name: true, sku: true } } } },
@@ -38,7 +38,6 @@ export class ReportsService {
 
     const lines: string[] = [];
 
-    // Headers
     lines.push(row([
       'Invoice Number',
       'Sale Date',
@@ -51,7 +50,6 @@ export class ReportsService {
       'Notes',
     ]));
 
-    // One row per sale item (flat — easier to analyse in Excel)
     for (const sale of sales) {
       for (const item of sale.items) {
         lines.push(row([
@@ -71,15 +69,15 @@ export class ReportsService {
     return lines.join('\n');
   }
 
-  async generateInventoryCsv(): Promise<string> {
+  async generateInventoryCsv(storeId: string): Promise<string> {
     const products = await this.prisma.product.findMany({
+      where: { storeId, isArchived: false },
       orderBy: { name: 'asc' },
       include: { category: true },
     });
 
     const lines: string[] = [];
 
-    // Headers
     lines.push(row([
       'Name',
       'SKU',
@@ -98,17 +96,17 @@ export class ReportsService {
         ? 'Out of stock'
         : isLowStock
         ? 'Low stock'
-        : 'OK';
+        : 'In stock';
 
       lines.push(row([
         p.name,
         p.sku,
-        p.category?.name ?? '',
+        p.category?.name ?? 'Uncategorised',
         p.stock,
         p.reorderLevel,
         status,
-        p.costPrice !== null ? Number(p.costPrice).toFixed(2) : '',
-        p.sellingPrice !== null ? Number(p.sellingPrice).toFixed(2) : '',
+        p.costPrice ? Number(p.costPrice).toFixed(2) : '',
+        p.sellingPrice ? Number(p.sellingPrice).toFixed(2) : '',
         formatDate(p.expiryDate),
       ]));
     }

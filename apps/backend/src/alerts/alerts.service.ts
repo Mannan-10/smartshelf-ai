@@ -5,10 +5,9 @@ import { PrismaService } from '../prisma.service.js';
 export class AlertsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getLowStockProducts() {
-    // stock <= reorderLevel — Prisma doesn't support column-to-column,
-    // so we fetch all and filter in JS (product count is small)
+  async getLowStockProducts(storeId: string) {
     const products = await this.prisma.product.findMany({
+      where: { storeId, isArchived: false },
       select: {
         id: true,
         name: true,
@@ -23,13 +22,14 @@ export class AlertsService {
     return products.filter((p) => p.stock <= p.reorderLevel);
   }
 
-  async getExpiringProducts(daysAhead = 30) {
-    const now = new Date();
+  async getExpiringProducts(storeId: string, daysAhead = 30) {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() + daysAhead);
 
     return this.prisma.product.findMany({
       where: {
+        storeId,
+        isArchived: false,
         expiryDate: {
           not: null,
           lte: cutoff,
@@ -47,22 +47,27 @@ export class AlertsService {
     });
   }
 
-  async getAlertsSummary() {
+  async getAlertsSummary(storeId: string) {
     const now = new Date();
     const in30Days = new Date();
     in30Days.setDate(in30Days.getDate() + 30);
 
     const [allProducts, expiring, expired] = await Promise.all([
       this.prisma.product.findMany({
+        where: { storeId, isArchived: false },
         select: { stock: true, reorderLevel: true },
       }),
       this.prisma.product.count({
         where: {
+          storeId,
+          isArchived: false,
           expiryDate: { not: null, gte: now, lte: in30Days },
         },
       }),
       this.prisma.product.count({
         where: {
+          storeId,
+          isArchived: false,
           expiryDate: { not: null, lt: now },
         },
       }),

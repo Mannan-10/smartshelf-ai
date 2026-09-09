@@ -25,133 +25,146 @@ function generateInvoiceNumber() {
 export class SalesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createSaleDto: CreateSaleDto) {
+  async create(storeId: string, createSaleDto: CreateSaleDto) {
     const invoiceNumber = createSaleDto.invoiceNumber || generateInvoiceNumber();
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
-        const validatedItems = [];
+      return await this.prisma.$transaction(
+        async (tx) => {
+          const validatedItems = [];
 
-        for (const item of createSaleDto.items) {
-          const product = await tx.product.findUnique({
-            where: { id: item.productId },
-          });
+          for (const item of createSaleDto.items) {
+            const product = await tx.product.findFirst({
+              where: { id: item.productId, storeId },
+            });
 
-          if (!product) {
-            throw new BadRequestException(`Product does not exist: ${item.productId}`);
-          }
+            if (!product) {
+              throw new BadRequestException(
+                `Product does not exist in this store: ${item.productId}`,
+              );
+            }
 
-          if (product.stock < item.quantity) {
-            throw new BadRequestException(
-              `Insufficient stock for "${product.name}". Available: ${product.stock}, requested: ${item.quantity}`,
-            );
-          }
+            if (product.stock < item.quantity) {
+              throw new BadRequestException(
+                `Insufficient stock for "${product.name}". Available: ${product.stock}, requested: ${item.quantity}`,
+              );
+            }
 
-          validatedItems.push({
-            product,
-            productId: item.productId,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            totalPrice: item.quantity * item.unitPrice,
-          });
-        }
-
-        const totalAmount = validatedItems.reduce((sum, item) => sum + item.totalPrice, 0);
-
-        const sale = await tx.sale.create({
-          data: {
-            invoiceNumber,
-            saleDate: createSaleDto.saleDate ? new Date(createSaleDto.saleDate) : new Date(),
-            totalAmount,
-            notes: createSaleDto.notes,
-          },
-        });
-
-        for (const item of validatedItems) {
-          const saleItem = await tx.saleItem.create({
-            data: {
-              saleId: sale.id,
+            validatedItems.push({
+              product,
               productId: item.productId,
               quantity: item.quantity,
               unitPrice: item.unitPrice,
-              totalPrice: item.totalPrice,
-            },
-          });
-
-          const stockBefore = item.product.stock;
-          const stockAfter = stockBefore - item.quantity;
-
-          await tx.product.update({
-            where: { id: item.productId },
-            data: { stock: { decrement: item.quantity } },
-          });
-
-          await tx.stockMovement.create({
-            data: {
-              productId: item.productId,
-              type: StockMovementType.SALE,
-              quantityChange: -item.quantity,
-              stockBefore,
-              stockAfter,
-              saleId: sale.id,
-              saleItemId: saleItem.id,
-              note: `Sale invoice ${invoiceNumber}`,
-            },
-          });
-
-          // FEFO batch deduction: deduct from soonest-expiring batch first
-          const batches = await tx.productBatch.findMany({
-            where: { productId: item.productId, quantity: { gt: 0 } },
-            orderBy: [{ expiryDate: 'asc' }, { receivedAt: 'asc' }],
-          });
-
-          let remaining = item.quantity;
-          for (const batch of batches) {
-            if (remaining <= 0) break;
-            const deduct = Math.min(batch.quantity, remaining);
-            remaining -= deduct;
-            await tx.productBatch.update({
-              where: { id: batch.id },
-              data: { quantity: { decrement: deduct } },
+              totalPrice: item.quantity * item.unitPrice,
             });
           }
-        }
 
-        return tx.sale.findUnique({
-          where: { id: sale.id },
-          include: {
-            items: { include: { product: true } },
-            stockMovements: { include: { product: true } },
-          },
-        });
-      }, {
-        maxWait: 15000,
-        timeout: 25000,
-      });
+          const totalAmount = validatedItems.reduce(
+            (sum, item) => sum + item.totalPrice,
+            0,
+          );
+
+          const sale = await tx.sale.create({
+            data: {
+              storeId,
+              invoiceNumber,
+              saleDate: createSaleDto.saleDate
+                ? new Date(createSaleDto.saleDate)
+                : new Date(),
+              totalAmount,
+              notes: createSaleDto.notes,
+            },
+          });
+
+          for (const item of validatedItems) {
+            const saleItem = await tx.saleItem.create({
+              data: {
+                saleId: sale.id,
+                productId: item.productId,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                totalPrice: item.totalPrice,
+              },
+            });
+
+            const stockBefore = item.product.stock;
+            const stockAfter = stockBefore - item.quantity;
+
+            await tx.product.update({
+              where: { id: item.productId },
+              data: { stock: { decrement: item.quantity } },
+            });
+
+            await tx.stockMovement.create({
+              data: {
+                storeId,
+                productId: item.productId,
+                type: StockMovementType.SALE,
+                quantityChange: -item.quantity,
+                stockBefore,
+                stockAfter,
+                saleId: sale.id,
+                saleItemId: saleItem.id,
+                note: `Sale invoice ${invoiceNumber}`,
+              },
+            });
+
+            // FEFO batch deduction: deduct from soonest-expiring batch first in this store
+            const batches = await tx.productBatch.findMany({
+              where: { productId: item.productId, storeId, quantity: { gt: 0 } },
+              orderBy: [{ expiryDate: 'asc' }, { receivedAt: 'asc' }],
+            });
+
+            let remaining = item.quantity;
+            for (const batch of batches) {
+              if (remaining <= 0) break;
+              const deduct = Math.min(batch.quantity, remaining);
+              remaining -= deduct;
+              await tx.productBatch.update({
+                where: { id: batch.id },
+                data: { quantity: { decrement: deduct } },
+              });
+            }
+          }
+
+          return tx.sale.findUnique({
+            where: { id: sale.id },
+            include: {
+              items: { include: { product: true } },
+              stockMovements: { include: { product: true } },
+            },
+          });
+        },
+        {
+          maxWait: 15000,
+          timeout: 25000,
+        },
+      );
     } catch (error) {
       if (isPrismaError(error, 'P2002')) {
-        throw new ConflictException('Invoice number already exists');
+        throw new ConflictException('Invoice number already exists in this store');
       }
       throw error;
     }
   }
 
-  async findAll() {
+  async findAll(storeId: string) {
     return this.prisma.sale.findMany({
+      where: { storeId },
       orderBy: { createdAt: 'desc' },
       include: { items: { include: { product: true } } },
     });
   }
 
-  async findOne(id: string) {
-    const sale = await this.prisma.sale.findUnique({
-      where: { id },
+  async findOne(storeId: string, id: string) {
+    const sale = await this.prisma.sale.findFirst({
+      where: { id, storeId },
       include: {
         items: { include: { product: true } },
         stockMovements: { include: { product: true } },
       },
     });
-    if (!sale) throw new NotFoundException('Sale not found');
+    if (!sale) throw new NotFoundException('Sale not found in this store');
     return sale;
   }
 }

@@ -9,8 +9,10 @@ import { SalesService } from './sales.service.js';
 import { PrismaService } from '../prisma.service.js';
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
+const mockStoreId = 'store-1';
 const mockProduct = {
   id: 'prod-1',
+  storeId: mockStoreId,
   name: 'Parachute Oil',
   sku: 'OIL-001',
   stock: 50,
@@ -21,6 +23,7 @@ const mockProduct = {
 
 const mockSale = {
   id: 'sale-1',
+  storeId: mockStoreId,
   invoiceNumber: 'INV-123',
   saleDate: new Date(),
   totalAmount: 50.0,
@@ -44,6 +47,7 @@ const mockSale = {
 // Transaction mock — executes the callback immediately
 const mockTx = {
   product: {
+    findFirst: jest.fn(),
     findUnique: jest.fn(),
     update: jest.fn(),
   },
@@ -66,9 +70,10 @@ const mockTx = {
 const mockPrisma = {
   sale: {
     findMany: jest.fn(),
+    findFirst: jest.fn(),
     findUnique: jest.fn(),
   },
-  $transaction: jest.fn((cb) => cb(mockTx)),
+  $transaction: jest.fn((cb: any) => cb(mockTx)),
 };
 
 describe('SalesService', () => {
@@ -94,7 +99,7 @@ describe('SalesService', () => {
     };
 
     beforeEach(() => {
-      mockTx.product.findUnique.mockResolvedValue(mockProduct);
+      mockTx.product.findFirst.mockResolvedValue(mockProduct);
       mockTx.sale.create.mockResolvedValue(mockSale);
       mockTx.saleItem.create.mockResolvedValue(mockSale.items[0]);
       mockTx.product.update.mockResolvedValue({ ...mockProduct, stock: 48 });
@@ -104,7 +109,7 @@ describe('SalesService', () => {
     });
 
     it('should create a sale and return it with items', async () => {
-      const result = await service.create(createDto);
+      const result = await service.create(mockStoreId, createDto);
 
       expect(result).toBeDefined();
       expect(mockTx.sale.create).toHaveBeenCalledTimes(1);
@@ -112,7 +117,7 @@ describe('SalesService', () => {
     });
 
     it('should decrement product stock', async () => {
-      await service.create(createDto);
+      await service.create(mockStoreId, createDto);
 
       expect(mockTx.product.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -123,11 +128,12 @@ describe('SalesService', () => {
     });
 
     it('should create a stock movement of type SALE', async () => {
-      await service.create(createDto);
+      await service.create(mockStoreId, createDto);
 
       expect(mockTx.stockMovement.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
+            storeId: mockStoreId,
             type: 'SALE',
             quantityChange: -2,
             productId: 'prod-1',
@@ -136,36 +142,36 @@ describe('SalesService', () => {
       );
     });
 
-    it('should throw BadRequestException if product not found', async () => {
-      mockTx.product.findUnique.mockResolvedValue(null);
+    it('should throw BadRequestException if product not found in store', async () => {
+      mockTx.product.findFirst.mockResolvedValue(null);
 
-      await expect(service.create(createDto)).rejects.toThrow(BadRequestException);
-      await expect(service.create(createDto)).rejects.toThrow('Product does not exist');
+      await expect(service.create(mockStoreId, createDto)).rejects.toThrow(BadRequestException);
+      await expect(service.create(mockStoreId, createDto)).rejects.toThrow('Product does not exist in this store');
     });
 
     it('should throw BadRequestException if insufficient stock', async () => {
-      mockTx.product.findUnique.mockResolvedValue({ ...mockProduct, stock: 1 });
+      mockTx.product.findFirst.mockResolvedValue({ ...mockProduct, stock: 1 });
 
       await expect(
-        service.create({ items: [{ productId: 'prod-1', quantity: 10, unitPrice: 25 }] }),
+        service.create(mockStoreId, { items: [{ productId: 'prod-1', quantity: 10, unitPrice: 25 }] }),
       ).rejects.toThrow(BadRequestException);
       await expect(
-        service.create({ items: [{ productId: 'prod-1', quantity: 10, unitPrice: 25 }] }),
+        service.create(mockStoreId, { items: [{ productId: 'prod-1', quantity: 10, unitPrice: 25 }] }),
       ).rejects.toThrow('Insufficient stock');
     });
 
     it('should throw ConflictException on duplicate invoice number', async () => {
       mockPrisma.$transaction.mockRejectedValueOnce({ code: 'P2002' });
 
-      await expect(service.create(createDto)).rejects.toThrow(ConflictException);
+      await expect(service.create(mockStoreId, createDto)).rejects.toThrow(ConflictException);
     });
 
     it('should use provided invoiceNumber if given', async () => {
-      await service.create({ ...createDto, invoiceNumber: 'INV-CUSTOM' });
+      await service.create(mockStoreId, { ...createDto, invoiceNumber: 'INV-CUSTOM' });
 
       expect(mockTx.sale.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ invoiceNumber: 'INV-CUSTOM' }),
+          data: expect.objectContaining({ invoiceNumber: 'INV-CUSTOM', storeId: mockStoreId }),
         }),
       );
     });
@@ -176,9 +182,8 @@ describe('SalesService', () => {
         { id: 'batch-2', quantity: 10, expiryDate: new Date('2026-12-01') },
       ]);
 
-      await service.create({ items: [{ productId: 'prod-1', quantity: 3, unitPrice: 25 }] });
+      await service.create(mockStoreId, { items: [{ productId: 'prod-1', quantity: 3, unitPrice: 25 }] });
 
-      // Should deduct from first batch (soonest expiry)
       expect(mockTx.productBatch.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 'batch-1' },
@@ -191,15 +196,18 @@ describe('SalesService', () => {
   // ── findAll ─────────────────────────────────────────────────────────────────
 
   describe('findAll', () => {
-    it('should return all sales ordered by createdAt desc', async () => {
+    it('should return all sales ordered by createdAt desc for store', async () => {
       mockPrisma.sale.findMany.mockResolvedValue([mockSale]);
 
-      const result = await service.findAll();
+      const result = await service.findAll(mockStoreId);
 
       expect(result).toHaveLength(1);
       expect(result[0].invoiceNumber).toBe('INV-123');
       expect(mockPrisma.sale.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ orderBy: { createdAt: 'desc' } }),
+        expect.objectContaining({
+          where: { storeId: mockStoreId },
+          orderBy: { createdAt: 'desc' },
+        }),
       );
     });
   });
@@ -207,18 +215,18 @@ describe('SalesService', () => {
   // ── findOne ─────────────────────────────────────────────────────────────────
 
   describe('findOne', () => {
-    it('should return a sale by id', async () => {
-      mockPrisma.sale.findUnique.mockResolvedValue(mockSale);
+    it('should return a sale by id and storeId', async () => {
+      mockPrisma.sale.findFirst.mockResolvedValue(mockSale);
 
-      const result = await service.findOne('sale-1');
+      const result = await service.findOne(mockStoreId, 'sale-1');
 
       expect(result.id).toBe('sale-1');
     });
 
-    it('should throw NotFoundException if sale not found', async () => {
-      mockPrisma.sale.findUnique.mockResolvedValue(null);
+    it('should throw NotFoundException if sale not found in store', async () => {
+      mockPrisma.sale.findFirst.mockResolvedValue(null);
 
-      await expect(service.findOne('nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockStoreId, 'nonexistent')).rejects.toThrow(NotFoundException);
     });
   });
 });

@@ -7,19 +7,48 @@ datasource db {
   provider = "postgresql"
 }
 
+model Store {
+  id           String          @id @default(cuid())
+  name         String
+  currency     String          @default("INR")
+  contactEmail String?
+  address      String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  users          User[]
+  categories     Category[]
+  products       Product[]
+  vendors        Vendor[]
+  purchaseOrders PurchaseOrder[]
+  sales          Sale[]
+  stockMovements StockMovement[]
+  batches        ProductBatch[]
+  shopSettings   ShopSettings[]
+
+  @@map("stores")
+}
+
 model Category {
   id          String    @id @default(cuid())
-  name        String    @unique
+  storeId     String?
+  store       Store?    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name        String
   description String?
   products    Product[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([storeId])
+  @@unique([storeId, name])
 }
 
 model Product {
   id             String              @id @default(cuid())
+  storeId        String?
+  store          Store?              @relation(fields: [storeId], references: [id], onDelete: Cascade)
   name           String
-  sku            String              @unique
+  sku            String
   description    String?
   categoryId     String?
   category       Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
@@ -36,11 +65,15 @@ model Product {
   saleItems      SaleItem[]
   batches        ProductBatch[]
 
+  @@index([storeId])
   @@index([categoryId])
+  @@unique([storeId, sku])
 }
 
 model Vendor {
   id             String          @id @default(cuid())
+  storeId        String?
+  store          Store?          @relation(fields: [storeId], references: [id], onDelete: Cascade)
   name           String
   contactName    String?
   email          String?
@@ -52,12 +85,15 @@ model Vendor {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
+  @@index([storeId])
   @@index([name])
 }
 
 model PurchaseOrder {
   id             String              @id @default(cuid())
-  orderNumber    String              @unique
+  storeId        String?
+  store          Store?              @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  orderNumber    String
   vendorId       String?
   vendor         Vendor?             @relation(fields: [vendorId], references: [id], onDelete: SetNull)
   orderDate      DateTime            @default(now())
@@ -69,7 +105,9 @@ model PurchaseOrder {
   updatedAt      DateTime            @updatedAt
   batches        ProductBatch[]
 
+  @@index([storeId])
   @@index([vendorId])
+  @@unique([storeId, orderNumber])
   @@map("purchase_orders")
 }
 
@@ -92,17 +130,20 @@ model PurchaseOrderItem {
 }
 
 model ProductBatch {
-  id              String        @id @default(cuid())
+  id              String         @id @default(cuid())
+  storeId         String?
+  store           Store?         @relation(fields: [storeId], references: [id], onDelete: Cascade)
   productId       String
-  product         Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product         Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
   purchaseOrderId String?
   purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id], onDelete: SetNull)
-  quantity        Int           // remaining quantity in this batch
-  unitCost        Decimal       @db.Decimal(10, 2)
+  quantity        Int            // remaining quantity in this batch
+  unitCost        Decimal        @db.Decimal(10, 2)
   expiryDate      DateTime?
-  receivedAt      DateTime      @default(now())
-  createdAt       DateTime      @default(now())
+  receivedAt      DateTime       @default(now())
+  createdAt       DateTime       @default(now())
 
+  @@index([storeId])
   @@index([productId])
   @@index([expiryDate])
   @@map("product_batches")
@@ -110,27 +151,32 @@ model ProductBatch {
 
 model Sale {
   id            String          @id @default(cuid())
-  invoiceNumber String          @unique
+  storeId       String?
+  store         Store?          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  invoiceNumber String
   saleDate      DateTime        @default(now())
   totalAmount   Float
   notes         String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
-  items         SaleItem[]
+  items          SaleItem[]
   stockMovements StockMovement[]
+
+  @@index([storeId])
+  @@unique([storeId, invoiceNumber])
 }
 
 model SaleItem {
-  id          String  @id @default(cuid())
-  saleId      String
-  productId   String
-  quantity    Int
-  unitPrice   Float
-  totalPrice  Float
+  id             String          @id @default(cuid())
+  saleId         String
+  productId      String
+  quantity       Int
+  unitPrice      Float
+  totalPrice     Float
 
-  sale        Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product     Product @relation(fields: [productId], references: [id])
+  sale           Sale            @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product        Product         @relation(fields: [productId], references: [id])
   stockMovements StockMovement[]
 }
 
@@ -142,6 +188,8 @@ enum StockMovementType {
 
 model StockMovement {
   id                  String             @id @default(cuid())
+  storeId             String?
+  store               Store?             @relation(fields: [storeId], references: [id], onDelete: Cascade)
   productId           String
   product             Product            @relation(fields: [productId], references: [id])
   type                StockMovementType
@@ -159,6 +207,7 @@ model StockMovement {
   sale                Sale?              @relation(fields: [saleId], references: [id])
   saleItem            SaleItem?          @relation(fields: [saleItemId], references: [id])
 
+  @@index([storeId])
   @@index([productId])
   @@index([purchaseOrderId])
   @@index([purchaseOrderItemId])
@@ -173,6 +222,8 @@ enum Role {
 
 model User {
   id           String   @id @default(cuid())
+  storeId      String?
+  store        Store?   @relation(fields: [storeId], references: [id], onDelete: Cascade)
   name         String
   email        String   @unique
   passwordHash String
@@ -180,11 +231,14 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  @@index([storeId])
   @@map("users")
 }
 
 model ShopSettings {
   id           String   @id @default(cuid())
+  storeId      String?
+  store        Store?   @relation(fields: [storeId], references: [id], onDelete: Cascade)
   shopName     String   @default("My Shop")
   contactEmail String?
   currency     String   @default("USD")
@@ -192,5 +246,6 @@ model ShopSettings {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  @@index([storeId])
   @@map("shop_settings")
 }

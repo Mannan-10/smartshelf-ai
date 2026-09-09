@@ -5,6 +5,8 @@ export type AuthTokenPayload = {
   sub: string;
   email: string;
   role: AppRole;
+  storeId?: string | null;
+  storeName?: string | null;
   iat?: number;
   exp?: number;
 };
@@ -41,6 +43,8 @@ export async function verifyAuthToken(
       sub: payload.sub,
       email: payload.email,
       role: payload.role,
+      storeId: typeof payload.storeId === 'string' ? payload.storeId : null,
+      storeName: typeof payload.storeName === 'string' ? payload.storeName : null,
       iat: payload.iat,
       exp: payload.exp,
     };

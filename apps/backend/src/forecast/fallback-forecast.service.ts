@@ -6,9 +6,9 @@ import { StockMovementType } from '../generated/prisma/client.js';
 export class FallbackForecastService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async forecastProduct(productId: string) {
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
+  async forecastProduct(storeId: string, productId: string) {
+    const product = await this.prisma.product.findFirst({
+      where: { id: productId, storeId },
       select: {
         id: true,
         name: true,
@@ -20,13 +20,14 @@ export class FallbackForecastService {
 
     if (!product) return null;
 
-    // Get last 7 days of SALE stock movements for this product
+    // Get last 7 days of SALE stock movements for this product in this store
     const since = new Date();
     since.setDate(since.getDate() - 7);
 
     const movements = await this.prisma.stockMovement.findMany({
       where: {
         productId,
+        storeId,
         type: StockMovementType.SALE,
         createdAt: { gte: since },
       },
@@ -58,6 +59,11 @@ export class FallbackForecastService {
     const forecastTotal7Days = parseFloat((avgDailyQuantity * 7).toFixed(2));
     const forecast7Days = dailyQtys.map((q) => parseFloat(q.toFixed(2)));
 
+    const daysUntilStockout =
+      avgDailyQuantity > 0
+        ? Math.floor(product.stock / avgDailyQuantity)
+        : null;
+
     return {
       product: {
         id: product.id,
@@ -70,14 +76,11 @@ export class FallbackForecastService {
         avgDailyQuantity: parseFloat(avgDailyQuantity.toFixed(2)),
         forecast7Days,
         forecastTotal7Days,
-        daysUntilStockout:
-          avgDailyQuantity > 0
-            ? Math.floor(product.stock / avgDailyQuantity)
-            : null,
+        daysUntilStockout,
         reorderRecommended: product.stock <= product.reorderLevel,
       },
       fallback: true,
-      fallbackReason: 'ML service unavailable — using 7-day rolling average',
+      fallbackReason: 'ML service unavailable or timed out',
     };
   }
 }

@@ -20,22 +20,26 @@ function isPrismaError(error: unknown, code: string) {
 export class CategoriesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createCategoryDto: CreateCategoryDto) {
+  async create(storeId: string, createCategoryDto: CreateCategoryDto) {
     try {
       return await this.prisma.category.create({
-        data: createCategoryDto,
+        data: {
+          ...createCategoryDto,
+          storeId,
+        },
       });
     } catch (error) {
       if (isPrismaError(error, 'P2002')) {
-        throw new ConflictException('Category name already exists');
+        throw new ConflictException('Category name already exists in this store');
       }
 
       throw error;
     }
   }
 
-  async findAll() {
+  async findAll(storeId: string) {
     return this.prisma.category.findMany({
+      where: { storeId },
       orderBy: {
         createdAt: 'desc',
       },
@@ -49,9 +53,9 @@ export class CategoriesService {
     });
   }
 
-  async findOne(id: string) {
-    const category = await this.prisma.category.findUnique({
-      where: { id },
+  async findOne(storeId: string, id: string) {
+    const category = await this.prisma.category.findFirst({
+      where: { id, storeId },
       include: {
         products: {
           orderBy: {
@@ -62,13 +66,15 @@ export class CategoriesService {
     });
 
     if (!category) {
-      throw new NotFoundException('Category not found');
+      throw new NotFoundException('Category not found in this store');
     }
 
     return category;
   }
 
-  async update(id: string, updateCategoryDto: UpdateCategoryDto) {
+  async update(storeId: string, id: string, updateCategoryDto: UpdateCategoryDto) {
+    await this.findOne(storeId, id);
+
     try {
       return await this.prisma.category.update({
         where: { id },
@@ -80,14 +86,16 @@ export class CategoriesService {
       }
 
       if (isPrismaError(error, 'P2002')) {
-        throw new ConflictException('Category name already exists');
+        throw new ConflictException('Category name already exists in this store');
       }
 
       throw error;
     }
   }
 
-  async remove(id: string) {
+  async remove(storeId: string, id: string) {
+    await this.findOne(storeId, id);
+
     try {
       await this.prisma.category.delete({
         where: { id },

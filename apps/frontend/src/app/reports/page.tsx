@@ -13,7 +13,7 @@ export default async function ReportsPage() {
   }
 
   return (
-    <AppShell role={user.role} email={user.email}>
+    <AppShell role={user.role} email={user.email} storeName={user.storeName}>
       <ReportsManager />
     </AppShell>
   );

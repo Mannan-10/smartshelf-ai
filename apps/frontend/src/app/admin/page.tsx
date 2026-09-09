@@ -68,7 +68,7 @@ export default async function AdminPage() {
   const overview = await getAdminOverview(token);
 
   return (
-    <AppShell role={user.role} email={user.email}>
+    <AppShell role={user.role} email={user.email} storeName={user.storeName}>
       <div className="rounded-xl border bg-background p-6 shadow-sm">
         <p className="text-sm font-medium text-muted-foreground">
           Admin Panel

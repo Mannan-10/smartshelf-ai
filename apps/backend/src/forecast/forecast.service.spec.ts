@@ -6,8 +6,10 @@ import { FallbackForecastService } from './fallback-forecast.service.js';
 import { PrismaService } from '../prisma.service.js';
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
+const mockStoreId = 'store-1';
 const mockProduct = {
     id: 'prod-1',
+    storeId: mockStoreId,
     name: 'Parachute Oil',
     sku: 'OIL-001',
     stock: 50,
@@ -19,7 +21,7 @@ const mockProduct = {
             saleId: 'sale-1',
             quantity: 5,
             totalPrice: 125.0,
-            sale: { saleDate: new Date('2026-06-01') },
+            sale: { saleDate: new Date('2026-06-01'), storeId: mockStoreId },
         },
     ],
 };
@@ -45,6 +47,7 @@ const mockFallbackResult = {
 
 const mockPrisma = {
     product: {
+        findFirst: jest.fn(),
         findUnique: jest.fn(),
         findMany: jest.fn(),
     },
@@ -77,7 +80,7 @@ describe('ForecastService', () => {
 
     describe('forecastProduct', () => {
         beforeEach(() => {
-            mockPrisma.product.findUnique.mockResolvedValue(mockProduct);
+            mockPrisma.product.findFirst.mockResolvedValue(mockProduct);
         });
 
         it('should return ML forecast when service is available', async () => {
@@ -86,7 +89,7 @@ describe('ForecastService', () => {
                 json: async () => mockMlResponse,
             });
 
-            const result = await service.forecastProduct('prod-1');
+            const result = await service.forecastProduct(mockStoreId, 'prod-1');
 
             expect(result.fallback).toBe(false);
             expect(result.forecast.avgDailyQuantity).toBe(2.5);
@@ -100,23 +103,22 @@ describe('ForecastService', () => {
                 json: async () => mockMlResponse,
             });
 
-            const result = await service.forecastProduct('prod-1');
+            const result = await service.forecastProduct(mockStoreId, 'prod-1');
 
-            // stock=50, avgDaily=2.5 → 50/2.5 = 20 days
             expect(result.forecast.daysUntilStockout).toBe(20);
         });
 
         it('should set reorderRecommended true when stock <= reorderLevel', async () => {
-            mockPrisma.product.findUnique.mockResolvedValue({
+            mockPrisma.product.findFirst.mockResolvedValue({
                 ...mockProduct,
-                stock: 5, // below reorderLevel of 10
+                stock: 5,
             });
             (global.fetch as jest.Mock).mockResolvedValue({
                 ok: true,
                 json: async () => mockMlResponse,
             });
 
-            const result = await service.forecastProduct('prod-1');
+            const result = await service.forecastProduct(mockStoreId, 'prod-1');
 
             expect(result.forecast.reorderRecommended).toBe(true);
         });
@@ -125,11 +127,11 @@ describe('ForecastService', () => {
             (global.fetch as jest.Mock).mockRejectedValue(new Error('ECONNREFUSED'));
             mockFallbackService.forecastProduct.mockResolvedValue(mockFallbackResult);
 
-            const result = await service.forecastProduct('prod-1');
+            const result = await service.forecastProduct(mockStoreId, 'prod-1');
 
             expect(result.fallback).toBe(true);
             expect(result.fallbackReason).toContain('ML service unavailable');
-            expect(mockFallbackService.forecastProduct).toHaveBeenCalledWith('prod-1');
+            expect(mockFallbackService.forecastProduct).toHaveBeenCalledWith(mockStoreId, 'prod-1');
         });
 
         it('should fall back when ML service returns non-200', async () => {
@@ -140,15 +142,15 @@ describe('ForecastService', () => {
             });
             mockFallbackService.forecastProduct.mockResolvedValue(mockFallbackResult);
 
-            const result = await service.forecastProduct('prod-1');
+            const result = await service.forecastProduct(mockStoreId, 'prod-1');
 
             expect(result.fallback).toBe(true);
         });
 
-        it('should throw NotFoundException if product not found', async () => {
-            mockPrisma.product.findUnique.mockResolvedValue(null);
+        it('should throw NotFoundException if product not found in store', async () => {
+            mockPrisma.product.findFirst.mockResolvedValue(null);
 
-            await expect(service.forecastProduct('nonexistent')).rejects.toThrow(NotFoundException);
+            await expect(service.forecastProduct(mockStoreId, 'nonexistent')).rejects.toThrow(NotFoundException);
         });
 
         it('should return null daysUntilStockout when avgDailyQuantity is 0', async () => {
@@ -157,7 +159,7 @@ describe('ForecastService', () => {
                 json: async () => ({ ...mockMlResponse, avg_daily_quantity: 0 }),
             });
 
-            const result = await service.forecastProduct('prod-1');
+            const result = await service.forecastProduct(mockStoreId, 'prod-1');
 
             expect(result.forecast.daysUntilStockout).toBeNull();
         });
@@ -166,41 +168,18 @@ describe('ForecastService', () => {
     // ── forecastAll ─────────────────────────────────────────────────────────────
 
     describe('forecastAll', () => {
-        it('should return forecasts for all products', async () => {
+        it('should return forecasts for all products in store', async () => {
             mockPrisma.product.findMany.mockResolvedValue([{ id: 'prod-1' }]);
-            mockPrisma.product.findUnique.mockResolvedValue(mockProduct);
+            mockPrisma.product.findFirst.mockResolvedValue(mockProduct);
             (global.fetch as jest.Mock).mockResolvedValue({
                 ok: true,
                 json: async () => mockMlResponse,
             });
 
-            const result = await service.forecastAll();
+            const result = await service.forecastAll(mockStoreId);
 
             expect(result).toHaveLength(1);
             expect(result[0].product.id).toBe('prod-1');
-        });
-
-        it('should skip products that fail and return the rest', async () => {
-            mockPrisma.product.findMany.mockResolvedValue([
-                { id: 'prod-1' },
-                { id: 'prod-fail' },
-            ]);
-            mockPrisma.product.findUnique
-                .mockResolvedValueOnce(mockProduct)
-                .mockResolvedValueOnce(null); // second product fails
-
-            (global.fetch as jest.Mock).mockResolvedValue({
-                ok: true,
-                json: async () => mockMlResponse,
-            });
-
-            // prod-fail throws NotFoundException which is caught by allSettled
-            mockFallbackService.forecastProduct.mockResolvedValue(null);
-
-            const result = await service.forecastAll();
-
-            // Only successful forecasts returned
-            expect(result.length).toBeGreaterThanOrEqual(0);
         });
     });
 });

@@ -28,6 +28,7 @@ function RegisterPageContent() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       name: "",
+      storeName: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -74,9 +75,9 @@ function RegisterPageContent() {
         <div className="mx-auto flex w-full flex-col justify-center space-y-8 sm:w-[400px]">
           
           <div className="flex flex-col space-y-2 text-center lg:text-left">
-            <h1 className="text-3xl font-semibold tracking-tight">Create an account</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">Create your store</h1>
             <p className="text-sm text-muted-foreground">
-              Enter your details to get started with SmartShelf AI
+              Register your business account to get started with SmartShelf AI
             </p>
           </div>
 
@@ -93,7 +94,7 @@ function RegisterPageContent() {
                 <Input
                   id="name"
                   type="text"
-                  placeholder="Mohammed Abdul Mannan"
+                  placeholder="e.g. Mohammed Abdul Mannan"
                   autoComplete="name"
                   className="h-11"
                   {...form.register("name")}
@@ -101,6 +102,22 @@ function RegisterPageContent() {
                 {form.formState.errors.name?.message && (
                   <p className="text-xs font-medium text-destructive">
                     {form.formState.errors.name.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="storeName">Store / Business Name</Label>
+                <Input
+                  id="storeName"
+                  type="text"
+                  placeholder="e.g. Apex Supermarket"
+                  className="h-11"
+                  {...form.register("storeName")}
+                />
+                {form.formState.errors.storeName?.message && (
+                  <p className="text-xs font-medium text-destructive">
+                    {form.formState.errors.storeName.message}
                   </p>
                 )}
               </div>
@@ -162,8 +179,8 @@ function RegisterPageContent() {
                 disabled={isLoading || form.formState.isSubmitting}
               >
                 {isLoading || form.formState.isSubmitting
-                  ? "Creating account..."
-                  : "Create account"}
+                  ? "Creating store..."
+                  : "Launch store"}
               </Button>
             </form>
 

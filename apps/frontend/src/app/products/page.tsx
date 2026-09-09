@@ -11,7 +11,7 @@ export default async function ProductsPage() {
   }
 
   return (
-    <AppShell role={user.role} email={user.email}>
+    <AppShell role={user.role} email={user.email} storeName={user.storeName}>
       <ProductsManager />
     </AppShell>
   );
