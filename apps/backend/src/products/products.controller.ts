@@ -37,10 +37,7 @@ export class ProductsController {
   }
 
   @Get(':id')
-  findOne(
-    @CurrentStore() storeId: string,
-    @Param('id') id: string,
-  ) {
+  findOne(@CurrentStore() storeId: string, @Param('id') id: string) {
     return this.productsService.findOne(storeId, id);
   }
 
@@ -55,18 +52,12 @@ export class ProductsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(
-    @CurrentStore() storeId: string,
-    @Param('id') id: string,
-  ) {
+  remove(@CurrentStore() storeId: string, @Param('id') id: string) {
     return this.productsService.remove(storeId, id);
   }
 
   @Get(':id/batches')
-  getBatches(
-    @CurrentStore() storeId: string,
-    @Param('id') id: string,
-  ) {
+  getBatches(@CurrentStore() storeId: string, @Param('id') id: string) {
     return this.productsService.getBatches(storeId, id);
   }
 

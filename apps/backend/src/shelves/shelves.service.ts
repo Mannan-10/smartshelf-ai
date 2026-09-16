@@ -44,7 +44,10 @@ export class ShelvesService {
     batches: { quantity: number; expiryDate: Date | null }[],
   ): ShelfHealthSummary {
     const currentStock = products.reduce((acc, p) => acc + (p.stock || 0), 0);
-    const occupancyPercentage = capacity > 0 ? Math.min(100, Math.round((currentStock / capacity) * 100)) : 0;
+    const occupancyPercentage =
+      capacity > 0
+        ? Math.min(100, Math.round((currentStock / capacity) * 100))
+        : 0;
 
     const now = new Date();
     const thirtyDaysFromNow = new Date();
@@ -87,7 +90,9 @@ export class ShelvesService {
       where: { storeId, code },
     });
     if (existing) {
-      throw new ConflictException(`Shelf with code "${code}" already exists in this store.`);
+      throw new ConflictException(
+        `Shelf with code "${code}" already exists in this store.`,
+      );
     }
 
     return this.prisma.shelfLocation.create({
@@ -131,7 +136,11 @@ export class ShelvesService {
     });
 
     return shelves.map((s) => {
-      const health = this.computeShelfHealth(s.capacity, s.products, s.productBatches);
+      const health = this.computeShelfHealth(
+        s.capacity,
+        s.products,
+        s.productBatches,
+      );
       return {
         ...s,
         ...health,
@@ -166,7 +175,11 @@ export class ShelvesService {
       throw new NotFoundException(`Shelf location with ID "${id}" not found.`);
     }
 
-    const health = this.computeShelfHealth(shelf.capacity, shelf.products, shelf.productBatches);
+    const health = this.computeShelfHealth(
+      shelf.capacity,
+      shelf.products,
+      shelf.productBatches,
+    );
     return {
       ...shelf,
       ...health,
@@ -187,7 +200,9 @@ export class ShelvesService {
         where: { storeId, code: newCode, NOT: { id } },
       });
       if (existing) {
-        throw new ConflictException(`Shelf with code "${newCode}" already exists.`);
+        throw new ConflictException(
+          `Shelf with code "${newCode}" already exists.`,
+        );
       }
     }
 
@@ -249,7 +264,11 @@ export class ShelvesService {
     });
   }
 
-  async reconcileAudit(storeId: string, shelfId: string, dto: AuditReconcileDto) {
+  async reconcileAudit(
+    storeId: string,
+    shelfId: string,
+    dto: AuditReconcileDto,
+  ) {
     const shelf = await this.prisma.shelfLocation.findFirst({
       where: { id: shelfId, storeId },
     });

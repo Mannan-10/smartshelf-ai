@@ -34,10 +34,7 @@ export class ShelvesController {
   }
 
   @Get(':id')
-  findOne(
-    @CurrentStore() storeId: string,
-    @Param('id') id: string,
-  ) {
+  findOne(@CurrentStore() storeId: string, @Param('id') id: string) {
     return this.shelvesService.findOne(storeId, id);
   }
 
@@ -51,10 +48,7 @@ export class ShelvesController {
   }
 
   @Delete(':id')
-  remove(
-    @CurrentStore() storeId: string,
-    @Param('id') id: string,
-  ) {
+  remove(@CurrentStore() storeId: string, @Param('id') id: string) {
     return this.shelvesService.remove(storeId, id);
   }
 

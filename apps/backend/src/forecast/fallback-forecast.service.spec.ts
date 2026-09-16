@@ -80,7 +80,10 @@ describe('FallbackForecastService', () => {
     });
 
     it('should set reorderRecommended true when stock <= reorderLevel', async () => {
-      mockPrisma.product.findFirst.mockResolvedValue({ ...mockProduct, stock: 5 });
+      mockPrisma.product.findFirst.mockResolvedValue({
+        ...mockProduct,
+        stock: 5,
+      });
       mockPrisma.stockMovement.findMany.mockResolvedValue(mockMovements);
 
       const result = await service.forecastProduct(mockStoreId, 'prod-1');

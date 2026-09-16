@@ -50,7 +50,9 @@ describe('DynamicMarkdownService', () => {
 
   describe('getMarkdownRecommendations', () => {
     it('calculates urgency and discount percentages for batches near expiry', async () => {
-      (mockPrisma.productBatch.findMany as any).mockResolvedValue([mockExpiringBatch]);
+      (mockPrisma.productBatch.findMany as any).mockResolvedValue([
+        mockExpiringBatch,
+      ]);
       (mockPrisma.stockMovement.findMany as any).mockResolvedValue([
         { quantityChange: -2 },
         { quantityChange: -2 },
@@ -70,7 +72,9 @@ describe('DynamicMarkdownService', () => {
 
   describe('applyMarkdown', () => {
     it('updates product selling price with clearance discount', async () => {
-      (mockPrisma.product.findFirst as any).mockResolvedValue(mockExpiringBatch.product);
+      (mockPrisma.product.findFirst as any).mockResolvedValue(
+        mockExpiringBatch.product,
+      );
       (mockPrisma.product.update as any).mockResolvedValue({
         ...mockExpiringBatch.product,
         sellingPrice: 30,

@@ -36,10 +36,7 @@ export class VendorsController {
   }
 
   @Get(':id')
-  findOne(
-    @CurrentStore() storeId: string,
-    @Param('id') id: string,
-  ) {
+  findOne(@CurrentStore() storeId: string, @Param('id') id: string) {
     return this.vendorsService.findOne(storeId, id);
   }
 
@@ -54,10 +51,7 @@ export class VendorsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(
-    @CurrentStore() storeId: string,
-    @Param('id') id: string,
-  ) {
+  remove(@CurrentStore() storeId: string, @Param('id') id: string) {
     return this.vendorsService.remove(storeId, id);
   }
 }

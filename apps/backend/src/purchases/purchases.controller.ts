@@ -1,11 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { PurchasesService } from './purchases.service.js';
 import { CreatePurchaseDto } from './dto/create-purchase.dto.js';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
@@ -30,10 +23,7 @@ export class PurchasesController {
   }
 
   @Get(':id')
-  findOne(
-    @CurrentStore() storeId: string,
-    @Param('id') id: string,
-  ) {
+  findOne(@CurrentStore() storeId: string, @Param('id') id: string) {
     return this.purchasesService.findOne(storeId, id);
   }
 }

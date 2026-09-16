@@ -1,22 +1,28 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 import { Role } from '../../common/enums/role.enum.js';
 
 export class RegisterDto {
-    @IsString()
-    name: string;
+  @IsString()
+  name: string;
 
-    @IsEmail()
-    email: string;
+  @IsEmail()
+  email: string;
 
-    @IsString()
-    @MinLength(6)
-    password: string;
+  @IsString()
+  @MinLength(6)
+  password: string;
 
-    @IsOptional()
-    @IsEnum(Role)
-    role?: Role;
+  @IsOptional()
+  @IsEnum(Role)
+  role?: Role;
 
-    @IsOptional()
-    @IsString()
-    storeName?: string;
+  @IsOptional()
+  @IsString()
+  storeName?: string;
 }

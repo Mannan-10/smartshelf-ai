@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service.js';
 import * as bcrypt from 'bcryptjs';
 import { Role } from '../common/enums/role.enum.js';
@@ -17,12 +22,14 @@ export class AdminService {
     const totalProducts = await this.prisma.product.count({
       where: { storeId, isArchived: false },
     });
-    
+
     const products = await this.prisma.product.findMany({
       where: { storeId, isArchived: false },
       select: { stock: true, reorderLevel: true },
     });
-    const lowStockItems = products.filter(p => p.stock <= p.reorderLevel).length;
+    const lowStockItems = products.filter(
+      (p) => p.stock <= p.reorderLevel,
+    ).length;
 
     const expiryAlerts = await this.prisma.product.count({
       where: {
@@ -36,14 +43,17 @@ export class AdminService {
       where: { storeId, saleDate: { gte: today } },
       select: { totalAmount: true },
     });
-    const totalSalesToday = salesTodayList.reduce((sum, sale) => sum + sale.totalAmount, 0);
+    const totalSalesToday = salesTodayList.reduce(
+      (sum, sale) => sum + sale.totalAmount,
+      0,
+    );
 
     return {
       message: 'Admin overview accessed successfully',
       user: user,
       permissions: {
         canManageProducts: true,
-        canManageStaff: true, 
+        canManageStaff: true,
         canViewReports: true,
         canAccessAdminPanel: true,
       },
@@ -70,8 +80,13 @@ export class AdminService {
     });
   }
 
-  async createUser(storeId: string, data: { email: string; password?: string; role: string; name?: string }) {
-    const existing = await this.prisma.user.findUnique({ where: { email: data.email } });
+  async createUser(
+    storeId: string,
+    data: { email: string; password?: string; role: string; name?: string },
+  ) {
+    const existing = await this.prisma.user.findUnique({
+      where: { email: data.email },
+    });
     if (existing) {
       throw new ConflictException('User with this email already exists');
     }

@@ -13,14 +13,22 @@ import { StockMovementType } from '../generated/prisma/client.js';
 function isPrismaError(error: any, code: string) {
   if (typeof error === 'object' && error !== null) {
     if (error.code === code) return true;
-    
+
     // Handle Prisma Neon DriverAdapterError mappings
-    if (code === 'P2003' && error.cause && (error.cause.code === '23001' || error.cause.code === '23503')) {
+    if (
+      code === 'P2003' &&
+      error.cause &&
+      (error.cause.code === '23001' || error.cause.code === '23503')
+    ) {
       return true;
     }
-    
+
     // Fallback message check just in case
-    if (code === 'P2003' && error.message && error.message.includes('foreign key constraint')) {
+    if (
+      code === 'P2003' &&
+      error.message &&
+      error.message.includes('foreign key constraint')
+    ) {
       return true;
     }
   }
@@ -31,7 +39,10 @@ function isPrismaError(error: any, code: string) {
 export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async validateCategory(storeId: string, categoryId: string | null | undefined) {
+  private async validateCategory(
+    storeId: string,
+    categoryId: string | null | undefined,
+  ) {
     if (categoryId === undefined || categoryId === null) {
       return;
     }
@@ -115,7 +126,11 @@ export class ProductsService {
     return product;
   }
 
-  async update(storeId: string, id: string, updateProductDto: UpdateProductDto) {
+  async update(
+    storeId: string,
+    id: string,
+    updateProductDto: UpdateProductDto,
+  ) {
     await this.validateCategory(storeId, updateProductDto.categoryId);
 
     // Verify product belongs to store
@@ -184,18 +199,25 @@ export class ProductsService {
       select: { id: true, name: true, sku: true },
     });
 
-    if (!product) throw new NotFoundException('Product not found in this store');
+    if (!product)
+      throw new NotFoundException('Product not found in this store');
 
     const batches = await this.prisma.productBatch.findMany({
       where: { productId, storeId, quantity: { gt: 0 } },
-      include: { purchaseOrder: { select: { orderNumber: true, orderDate: true } } },
+      include: {
+        purchaseOrder: { select: { orderNumber: true, orderDate: true } },
+      },
       orderBy: [{ expiryDate: 'asc' }, { receivedAt: 'asc' }],
     });
 
     return { product, batches };
   }
 
-  async adjustStock(storeId: string, id: string, adjustStockDto: AdjustStockDto) {
+  async adjustStock(
+    storeId: string,
+    id: string,
+    adjustStockDto: AdjustStockDto,
+  ) {
     const { quantityChange, note } = adjustStockDto;
     if (quantityChange === 0) {
       throw new BadRequestException('Quantity change cannot be zero');
@@ -211,7 +233,9 @@ export class ProductsService {
       }
 
       if (product.stock + quantityChange < 0) {
-        throw new BadRequestException('Adjustment would result in negative stock');
+        throw new BadRequestException(
+          'Adjustment would result in negative stock',
+        );
       }
 
       const stockBefore = product.stock;

@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, MaxLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class ApplyMarkdownDto {
   @IsString()

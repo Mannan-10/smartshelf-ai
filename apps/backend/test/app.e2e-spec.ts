@@ -27,7 +27,11 @@ beforeAll(async () => {
 
   // Same pipes as main.ts
   app.useGlobalPipes(
-    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
   );
 
   await app.init();
@@ -37,12 +41,24 @@ beforeAll(async () => {
 // ── Cleanup test data after all tests ─────────────────────────────────────────
 afterAll(async () => {
   // Delete in FK-safe order
-  await prisma.stockMovement.deleteMany({ where: { product: { name: { startsWith: 'E2E' } } } });
-  await prisma.saleItem.deleteMany({ where: { product: { name: { startsWith: 'E2E' } } } });
-  await prisma.sale.deleteMany({ where: { invoiceNumber: { startsWith: 'E2E-' } } });
-  await prisma.purchaseOrderItem.deleteMany({ where: { product: { name: { startsWith: 'E2E' } } } });
-  await prisma.productBatch.deleteMany({ where: { product: { name: { startsWith: 'E2E' } } } });
-  await prisma.purchaseOrder.deleteMany({ where: { orderNumber: { startsWith: 'E2E-' } } });
+  await prisma.stockMovement.deleteMany({
+    where: { product: { name: { startsWith: 'E2E' } } },
+  });
+  await prisma.saleItem.deleteMany({
+    where: { product: { name: { startsWith: 'E2E' } } },
+  });
+  await prisma.sale.deleteMany({
+    where: { invoiceNumber: { startsWith: 'E2E-' } },
+  });
+  await prisma.purchaseOrderItem.deleteMany({
+    where: { product: { name: { startsWith: 'E2E' } } },
+  });
+  await prisma.productBatch.deleteMany({
+    where: { product: { name: { startsWith: 'E2E' } } },
+  });
+  await prisma.purchaseOrder.deleteMany({
+    where: { orderNumber: { startsWith: 'E2E-' } },
+  });
   await prisma.product.deleteMany({ where: { name: { startsWith: 'E2E' } } });
   await prisma.category.deleteMany({ where: { name: { startsWith: 'E2E' } } });
   await prisma.vendor.deleteMany({ where: { name: { startsWith: 'E2E' } } });
@@ -181,13 +197,23 @@ describe('Products', () => {
       await request(app.getHttpServer())
         .post('/products')
         .set('Authorization', `Bearer ${accessToken}`)
-        .send({ name: 'E2E Duplicate', sku: `E2E-SKU-FIXED`, stock: 10, reorderLevel: 5 })
+        .send({
+          name: 'E2E Duplicate',
+          sku: `E2E-SKU-FIXED`,
+          stock: 10,
+          reorderLevel: 5,
+        })
         .expect(201);
 
       await request(app.getHttpServer())
         .post('/products')
         .set('Authorization', `Bearer ${accessToken}`)
-        .send({ name: 'E2E Duplicate 2', sku: `E2E-SKU-FIXED`, stock: 10, reorderLevel: 5 })
+        .send({
+          name: 'E2E Duplicate 2',
+          sku: `E2E-SKU-FIXED`,
+          stock: 10,
+          reorderLevel: 5,
+        })
         .expect(409);
     });
 
@@ -202,7 +228,12 @@ describe('Products', () => {
     it('401 — no token', async () => {
       await request(app.getHttpServer())
         .post('/products')
-        .send({ name: 'E2E No Auth', sku: 'E2E-NOAUTH', stock: 0, reorderLevel: 0 })
+        .send({
+          name: 'E2E No Auth',
+          sku: 'E2E-NOAUTH',
+          stock: 0,
+          reorderLevel: 0,
+        })
         .expect(401);
     });
   });
@@ -264,7 +295,11 @@ describe('Vendors', () => {
       const res = await request(app.getHttpServer())
         .post('/vendors')
         .set('Authorization', `Bearer ${accessToken}`)
-        .send({ name: 'E2E Vendor', contactName: 'Test Contact', phone: '9876543210' })
+        .send({
+          name: 'E2E Vendor',
+          contactName: 'Test Contact',
+          phone: '9876543210',
+        })
         .expect(201);
 
       expect(res.body.name).toBe('E2E Vendor');
@@ -272,7 +307,10 @@ describe('Vendors', () => {
     });
 
     it('401 — no token', async () => {
-      await request(app.getHttpServer()).post('/vendors').send({ name: 'E2E No Auth' }).expect(401);
+      await request(app.getHttpServer())
+        .post('/vendors')
+        .send({ name: 'E2E No Auth' })
+        .expect(401);
     });
   });
 
@@ -327,7 +365,15 @@ describe('Purchases', () => {
       await request(app.getHttpServer())
         .post('/purchases')
         .set('Authorization', `Bearer ${accessToken}`)
-        .send({ items: [{ productId: '123e4567-e89b-12d3-a456-426614174000', quantity: 5, unitCost: 10 }] })
+        .send({
+          items: [
+            {
+              productId: '123e4567-e89b-12d3-a456-426614174000',
+              quantity: 5,
+              unitCost: 10,
+            },
+          ],
+        })
         .expect(400);
     });
 
@@ -428,7 +474,15 @@ describe('Sales', () => {
       await request(app.getHttpServer())
         .post('/sales')
         .set('Authorization', `Bearer ${accessToken}`)
-        .send({ items: [{ productId: '123e4567-e89b-12d3-a456-426614174000', quantity: 1, unitPrice: 25 }] })
+        .send({
+          items: [
+            {
+              productId: '123e4567-e89b-12d3-a456-426614174000',
+              quantity: 1,
+              unitPrice: 25,
+            },
+          ],
+        })
         .expect(400);
     });
 

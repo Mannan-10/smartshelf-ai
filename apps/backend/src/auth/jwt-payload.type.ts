@@ -1,9 +1,9 @@
 import { Role } from '../common/enums/role.enum.js';
 
 export type JwtPayload = {
-    sub: string;
-    email: string;
-    role: Role;
-    storeId?: string | null;
-    storeName?: string | null;
+  sub: string;
+  email: string;
+  role: Role;
+  storeId?: string | null;
+  storeName?: string | null;
 };

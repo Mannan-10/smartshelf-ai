@@ -9,10 +9,7 @@ export class ForecastController {
   constructor(private readonly forecastService: ForecastService) {}
 
   @Post('product/:id')
-  forecastProduct(
-    @CurrentStore() storeId: string,
-    @Param('id') id: string,
-  ) {
+  forecastProduct(@CurrentStore() storeId: string, @Param('id') id: string) {
     return this.forecastService.forecastProduct(storeId, id);
   }
 

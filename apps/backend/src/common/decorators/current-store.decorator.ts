@@ -1,4 +1,8 @@
-import { createParamDecorator, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  createParamDecorator,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 
 export const CurrentStore = createParamDecorator(
   (data: { required?: boolean } | undefined, ctx: ExecutionContext): string => {
@@ -8,7 +12,9 @@ export const CurrentStore = createParamDecorator(
     const isRequired = data?.required !== false;
 
     if (isRequired && !storeId) {
-      throw new ForbiddenException('Store context is required for this operation');
+      throw new ForbiddenException(
+        'Store context is required for this operation',
+      );
     }
 
     return storeId;

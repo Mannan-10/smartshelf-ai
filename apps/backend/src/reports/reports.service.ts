@@ -38,31 +38,35 @@ export class ReportsService {
 
     const lines: string[] = [];
 
-    lines.push(row([
-      'Invoice Number',
-      'Sale Date',
-      'Product Name',
-      'SKU',
-      'Quantity',
-      'Unit Price (₹)',
-      'Line Total (₹)',
-      'Invoice Total (₹)',
-      'Notes',
-    ]));
+    lines.push(
+      row([
+        'Invoice Number',
+        'Sale Date',
+        'Product Name',
+        'SKU',
+        'Quantity',
+        'Unit Price (₹)',
+        'Line Total (₹)',
+        'Invoice Total (₹)',
+        'Notes',
+      ]),
+    );
 
     for (const sale of sales) {
       for (const item of sale.items) {
-        lines.push(row([
-          sale.invoiceNumber,
-          formatDate(sale.saleDate),
-          item.product.name,
-          item.product.sku,
-          item.quantity,
-          Number(item.unitPrice).toFixed(2),
-          Number(item.totalPrice).toFixed(2),
-          Number(sale.totalAmount).toFixed(2),
-          sale.notes ?? '',
-        ]));
+        lines.push(
+          row([
+            sale.invoiceNumber,
+            formatDate(sale.saleDate),
+            item.product.name,
+            item.product.sku,
+            item.quantity,
+            Number(item.unitPrice).toFixed(2),
+            Number(item.totalPrice).toFixed(2),
+            Number(sale.totalAmount).toFixed(2),
+            sale.notes ?? '',
+          ]),
+        );
       }
     }
 
@@ -78,37 +82,38 @@ export class ReportsService {
 
     const lines: string[] = [];
 
-    lines.push(row([
-      'Name',
-      'SKU',
-      'Category',
-      'Stock',
-      'Reorder Level',
-      'Status',
-      'Cost Price (₹)',
-      'Selling Price (₹)',
-      'Expiry Date',
-    ]));
+    lines.push(
+      row([
+        'Name',
+        'SKU',
+        'Category',
+        'Stock',
+        'Reorder Level',
+        'Status',
+        'Cost Price (₹)',
+        'Selling Price (₹)',
+        'Expiry Date',
+      ]),
+    );
 
     for (const p of products) {
       const isLowStock = p.stock <= p.reorderLevel;
-      const status = p.stock === 0
-        ? 'Out of stock'
-        : isLowStock
-        ? 'Low stock'
-        : 'In stock';
+      const status =
+        p.stock === 0 ? 'Out of stock' : isLowStock ? 'Low stock' : 'In stock';
 
-      lines.push(row([
-        p.name,
-        p.sku,
-        p.category?.name ?? 'Uncategorised',
-        p.stock,
-        p.reorderLevel,
-        status,
-        p.costPrice ? Number(p.costPrice).toFixed(2) : '',
-        p.sellingPrice ? Number(p.sellingPrice).toFixed(2) : '',
-        formatDate(p.expiryDate),
-      ]));
+      lines.push(
+        row([
+          p.name,
+          p.sku,
+          p.category?.name ?? 'Uncategorised',
+          p.stock,
+          p.reorderLevel,
+          status,
+          p.costPrice ? Number(p.costPrice).toFixed(2) : '',
+          p.sellingPrice ? Number(p.sellingPrice).toFixed(2) : '',
+          formatDate(p.expiryDate),
+        ]),
+      );
     }
 
     return lines.join('\n');

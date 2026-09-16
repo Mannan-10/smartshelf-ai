@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service.js';
 import { GenerateAutoPODto } from './dto/generate-auto-po.dto.js';
 import { StockMovementType } from '../generated/prisma/client.js';
@@ -47,7 +51,10 @@ export class AutoPOService {
     const lowStockProducts = products.filter((p) => p.stock <= p.reorderLevel);
 
     // Fetch past purchase history to map preferred/primary vendors
-    const vendorMap = new Map<string, { id: string; name: string; email?: string | null; phone?: string | null }>();
+    const vendorMap = new Map<
+      string,
+      { id: string; name: string; email?: string | null; phone?: string | null }
+    >();
     const allVendors = await this.prisma.vendor.findMany({
       where: { storeId },
     });
@@ -70,17 +77,18 @@ export class AutoPOService {
         orderBy: { createdAt: 'desc' },
       });
 
-      const matchedVendor = lastPOItem?.purchaseOrder?.vendor || allVendors[0] || null;
+      const matchedVendor =
+        lastPOItem?.purchaseOrder?.vendor || allVendors[0] || null;
 
       const targetStock = Math.max(p.reorderLevel * 2, 20);
       const recommendedQty = Math.max(1, targetStock - p.stock);
       const unitCost = p.costPrice
         ? Number(p.costPrice)
         : lastPOItem?.unitCost
-        ? Number(lastPOItem.unitCost)
-        : p.sellingPrice
-        ? Number(p.sellingPrice) * 0.7
-        : 10;
+          ? Number(lastPOItem.unitCost)
+          : p.sellingPrice
+            ? Number(p.sellingPrice) * 0.7
+            : 10;
 
       let urgency: 'CRITICAL' | 'HIGH' | 'MEDIUM' = 'MEDIUM';
       if (p.stock === 0) {
@@ -132,7 +140,10 @@ export class AutoPOService {
 
     const vendorGroups = Array.from(groupsMap.values());
     const totalLowStockItems = suggestions.length;
-    const totalEstimatedCost = vendorGroups.reduce((sum, g) => sum + g.totalCost, 0);
+    const totalEstimatedCost = vendorGroups.reduce(
+      (sum, g) => sum + g.totalCost,
+      0,
+    );
 
     return {
       totalLowStockItems,
@@ -151,7 +162,9 @@ export class AutoPOService {
     }
 
     if (!dto.items || dto.items.length === 0) {
-      throw new BadRequestException('At least one item is required to generate an Auto-PO.');
+      throw new BadRequestException(
+        'At least one item is required to generate an Auto-PO.',
+      );
     }
 
     const orderNumber = `AUTO-${Date.now().toString().slice(-6)}`;
@@ -163,7 +176,9 @@ export class AutoPOService {
     });
 
     if (storeProducts.length !== productIds.length) {
-      throw new BadRequestException('One or more products do not belong to this store.');
+      throw new BadRequestException(
+        'One or more products do not belong to this store.',
+      );
     }
 
     const totalCost = dto.items.reduce(
@@ -179,7 +194,9 @@ export class AutoPOService {
           orderNumber,
           orderDate: new Date(),
           totalAmount: totalCost,
-          notes: dto.notes ? `[Auto-PO] ${dto.notes}` : `[Auto-PO] Automated restock recommendation for low stock items.`,
+          notes: dto.notes
+            ? `[Auto-PO] ${dto.notes}`
+            : `[Auto-PO] Automated restock recommendation for low stock items.`,
         },
       });
 

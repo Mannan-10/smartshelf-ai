@@ -105,8 +105,12 @@ describe('AuthService', () => {
     it('should throw ConflictException if email already exists', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
 
-      await expect(service.register(registerDto)).rejects.toThrow(ConflictException);
-      await expect(service.register(registerDto)).rejects.toThrow('Email already registered');
+      await expect(service.register(registerDto)).rejects.toThrow(
+        ConflictException,
+      );
+      await expect(service.register(registerDto)).rejects.toThrow(
+        'Email already registered',
+      );
     });
 
     it('should default role to OWNER if not provided', async () => {
@@ -140,20 +144,29 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException if user not found', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
-      await expect(service.login(loginDto)).rejects.toThrow('Invalid email or password');
+      await expect(service.login(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      await expect(service.login(loginDto)).rejects.toThrow(
+        'Invalid email or password',
+      );
     });
 
     it('should throw UnauthorizedException if password is wrong', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
 
-      await expect(service.login({ ...loginDto, password: 'wrongpassword' })).rejects.toThrow(UnauthorizedException);
+      await expect(
+        service.login({ ...loginDto, password: 'wrongpassword' }),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should lowercase email before lookup', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
 
-      await service.login({ email: 'TEST@EXAMPLE.COM', password: 'password123' });
+      await service.login({
+        email: 'TEST@EXAMPLE.COM',
+        password: 'password123',
+      });
 
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: { email: 'test@example.com' },

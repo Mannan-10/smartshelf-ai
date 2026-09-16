@@ -36,7 +36,9 @@ export class PurchasesService {
               where: { id: createPurchaseDto.vendorId, storeId },
             });
             if (!vendor) {
-              throw new BadRequestException('Vendor does not exist in this store');
+              throw new BadRequestException(
+                'Vendor does not exist in this store',
+              );
             }
           }
 
@@ -98,7 +100,9 @@ export class PurchasesService {
               data: {
                 stock: { increment: item.quantity },
                 costPrice: item.unitCost,
-                ...(item.expiryDate ? { expiryDate: new Date(item.expiryDate) } : {}),
+                ...(item.expiryDate
+                  ? { expiryDate: new Date(item.expiryDate) }
+                  : {}),
               },
             });
 
@@ -142,7 +146,9 @@ export class PurchasesService {
       );
     } catch (error) {
       if (isPrismaError(error, 'P2002')) {
-        throw new ConflictException('Purchase order number already exists in this store');
+        throw new ConflictException(
+          'Purchase order number already exists in this store',
+        );
       }
       throw error;
     }

@@ -36,10 +36,7 @@ export class CategoriesController {
   }
 
   @Get(':id')
-  findOne(
-    @CurrentStore() storeId: string,
-    @Param('id') id: string,
-  ) {
+  findOne(@CurrentStore() storeId: string, @Param('id') id: string) {
     return this.categoriesService.findOne(storeId, id);
   }
 
@@ -54,10 +51,7 @@ export class CategoriesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(
-    @CurrentStore() storeId: string,
-    @Param('id') id: string,
-  ) {
+  remove(@CurrentStore() storeId: string, @Param('id') id: string) {
     return this.categoriesService.remove(storeId, id);
   }
 }

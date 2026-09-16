@@ -73,7 +73,9 @@ export class AlertsService {
       }),
     ]);
 
-    const lowStock = allProducts.filter((p) => p.stock <= p.reorderLevel).length;
+    const lowStock = allProducts.filter(
+      (p) => p.stock <= p.reorderLevel,
+    ).length;
 
     return { lowStock, expiring, expired };
   }

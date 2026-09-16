@@ -1,4 +1,11 @@
-import { IsInt, IsPositive, IsString, IsNotEmpty, IsNumber, Min } from 'class-validator';
+import {
+  IsInt,
+  IsPositive,
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  Min,
+} from 'class-validator';
 
 export class CreateSaleItemDto {
   @IsString()

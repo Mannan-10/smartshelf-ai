@@ -148,33 +148,49 @@ describe('SalesService', () => {
     it('should throw BadRequestException if product not found in store', async () => {
       mockTx.product.findFirst.mockResolvedValue(null);
 
-      await expect(service.create(mockStoreId, createDto)).rejects.toThrow(BadRequestException);
-      await expect(service.create(mockStoreId, createDto)).rejects.toThrow('Product does not exist in this store');
+      await expect(service.create(mockStoreId, createDto)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.create(mockStoreId, createDto)).rejects.toThrow(
+        'Product does not exist in this store',
+      );
     });
 
     it('should throw BadRequestException if insufficient stock', async () => {
       mockTx.product.findFirst.mockResolvedValue({ ...mockProduct, stock: 1 });
 
       await expect(
-        service.create(mockStoreId, { items: [{ productId: 'prod-1', quantity: 10, unitPrice: 25 }] }),
+        service.create(mockStoreId, {
+          items: [{ productId: 'prod-1', quantity: 10, unitPrice: 25 }],
+        }),
       ).rejects.toThrow(BadRequestException);
       await expect(
-        service.create(mockStoreId, { items: [{ productId: 'prod-1', quantity: 10, unitPrice: 25 }] }),
+        service.create(mockStoreId, {
+          items: [{ productId: 'prod-1', quantity: 10, unitPrice: 25 }],
+        }),
       ).rejects.toThrow('Insufficient stock');
     });
 
     it('should throw ConflictException on duplicate invoice number', async () => {
       mockPrisma.$transaction.mockRejectedValueOnce({ code: 'P2002' });
 
-      await expect(service.create(mockStoreId, createDto)).rejects.toThrow(ConflictException);
+      await expect(service.create(mockStoreId, createDto)).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it('should use provided invoiceNumber if given', async () => {
-      await service.create(mockStoreId, { ...createDto, invoiceNumber: 'INV-CUSTOM' });
+      await service.create(mockStoreId, {
+        ...createDto,
+        invoiceNumber: 'INV-CUSTOM',
+      });
 
       expect(mockTx.sale.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ invoiceNumber: 'INV-CUSTOM', storeId: mockStoreId }),
+          data: expect.objectContaining({
+            invoiceNumber: 'INV-CUSTOM',
+            storeId: mockStoreId,
+          }),
         }),
       );
     });
@@ -185,7 +201,9 @@ describe('SalesService', () => {
         { id: 'batch-2', quantity: 10, expiryDate: new Date('2026-12-01') },
       ]);
 
-      await service.create(mockStoreId, { items: [{ productId: 'prod-1', quantity: 3, unitPrice: 25 }] });
+      await service.create(mockStoreId, {
+        items: [{ productId: 'prod-1', quantity: 3, unitPrice: 25 }],
+      });
 
       expect(mockTx.productBatch.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -229,7 +247,9 @@ describe('SalesService', () => {
     it('should throw NotFoundException if sale not found in store', async () => {
       mockPrisma.sale.findFirst.mockResolvedValue(null);
 
-      await expect(service.findOne(mockStoreId, 'nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockStoreId, 'nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

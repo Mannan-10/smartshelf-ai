@@ -131,7 +131,9 @@ describe('ShelvesService', () => {
         products: [],
         productBatches: [],
       };
-      (mockPrisma.shelfLocation.findMany as any).mockResolvedValue([emptyShelf]);
+      (mockPrisma.shelfLocation.findMany as any).mockResolvedValue([
+        emptyShelf,
+      ]);
 
       const results = await service.findAll(mockStoreId);
       expect(results[0].status).toBe('CRITICAL');
@@ -151,9 +153,9 @@ describe('ShelvesService', () => {
     it('throws NotFoundException if shelf does not exist', async () => {
       (mockPrisma.shelfLocation.findFirst as any).mockResolvedValue(null);
 
-      await expect(service.findOne(mockStoreId, 'non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.findOne(mockStoreId, 'non-existent'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 

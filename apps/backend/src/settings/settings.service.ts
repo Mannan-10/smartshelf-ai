@@ -36,7 +36,9 @@ export class SettingsService {
       data: {
         ...(dto.shopName ? { name: dto.shopName } : {}),
         ...(dto.currency ? { currency: dto.currency } : {}),
-        ...(dto.contactEmail !== undefined ? { contactEmail: dto.contactEmail } : {}),
+        ...(dto.contactEmail !== undefined
+          ? { contactEmail: dto.contactEmail }
+          : {}),
         ...(dto.address !== undefined ? { address: dto.address } : {}),
       },
     });

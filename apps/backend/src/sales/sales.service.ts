@@ -26,7 +26,8 @@ export class SalesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(storeId: string, createSaleDto: CreateSaleDto) {
-    const invoiceNumber = createSaleDto.invoiceNumber || generateInvoiceNumber();
+    const invoiceNumber =
+      createSaleDto.invoiceNumber || generateInvoiceNumber();
 
     try {
       return await this.prisma.$transaction(
@@ -114,7 +115,11 @@ export class SalesService {
 
             // FEFO batch deduction: deduct from soonest-expiring batch first in this store
             const batches = await tx.productBatch.findMany({
-              where: { productId: item.productId, storeId, quantity: { gt: 0 } },
+              where: {
+                productId: item.productId,
+                storeId,
+                quantity: { gt: 0 },
+              },
               orderBy: [{ expiryDate: 'asc' }, { receivedAt: 'asc' }],
             });
 
@@ -145,7 +150,9 @@ export class SalesService {
       );
     } catch (error) {
       if (isPrismaError(error, 'P2002')) {
-        throw new ConflictException('Invoice number already exists in this store');
+        throw new ConflictException(
+          'Invoice number already exists in this store',
+        );
       }
       throw error;
     }

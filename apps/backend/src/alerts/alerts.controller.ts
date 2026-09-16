@@ -19,10 +19,7 @@ export class AlertsController {
   }
 
   @Get('expiring')
-  getExpiring(
-    @CurrentStore() storeId: string,
-    @Query('days') days?: string,
-  ) {
+  getExpiring(@CurrentStore() storeId: string, @Query('days') days?: string) {
     const daysAhead = days ? parseInt(days, 10) : 30;
     return this.alertsService.getExpiringProducts(storeId, daysAhead);
   }

@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service.js';
 import { CreateVendorDto } from './dto/create-vendor.dto.js';
 import { UpdateVendorDto } from './dto/update-vendor.dto.js';

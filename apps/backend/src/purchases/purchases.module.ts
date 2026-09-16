@@ -4,8 +4,8 @@ import { PurchasesController } from './purchases.controller.js';
 import { PurchasesService } from './purchases.service.js';
 
 @Module({
-    imports: [PrismaModule],
-    controllers: [PurchasesController],
-    providers: [PurchasesService],
+  imports: [PrismaModule],
+  controllers: [PurchasesController],
+  providers: [PurchasesService],
 })
-export class PurchasesModule { }
+export class PurchasesModule {}

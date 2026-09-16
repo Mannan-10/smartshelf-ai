@@ -21,28 +21,35 @@ export class ForecastService {
       },
     });
 
-    if (!product) throw new NotFoundException('Product not found in this store');
+    if (!product)
+      throw new NotFoundException('Product not found in this store');
 
     // Build feature vector from real product data
     const saleItems = product.saleItems;
     const totalQuantitySold = saleItems.reduce((s, i) => s + i.quantity, 0);
-    const totalRevenue      = saleItems.reduce((s, i) => s + Number(i.totalPrice), 0);
-    const numOrders         = new Set(saleItems.map((i) => i.saleId)).size;
-    const avgUnitPrice      = Number(product.sellingPrice ?? product.costPrice ?? 0);
-    const avgQtyPerOrder    = numOrders > 0 ? totalQuantitySold / numOrders : 0;
+    const totalRevenue = saleItems.reduce(
+      (s, i) => s + Number(i.totalPrice),
+      0,
+    );
+    const numOrders = new Set(saleItems.map((i) => i.saleId)).size;
+    const avgUnitPrice = Number(product.sellingPrice ?? product.costPrice ?? 0);
+    const avgQtyPerOrder = numOrders > 0 ? totalQuantitySold / numOrders : 0;
 
     const saleDates = saleItems.map((i) => new Date(i.sale.saleDate).getTime());
-    const daysActive = saleDates.length > 0
-      ? Math.ceil((Date.now() - Math.min(...saleDates)) / (1000 * 60 * 60 * 24)) + 1
-      : 1;
+    const daysActive =
+      saleDates.length > 0
+        ? Math.ceil(
+            (Date.now() - Math.min(...saleDates)) / (1000 * 60 * 60 * 24),
+          ) + 1
+        : 1;
 
     const features = {
-      total_quantity_sold:    totalQuantitySold,
-      total_revenue:          totalRevenue,
-      num_orders:             numOrders,
-      avg_unit_price:         avgUnitPrice,
+      total_quantity_sold: totalQuantitySold,
+      total_revenue: totalRevenue,
+      num_orders: numOrders,
+      avg_unit_price: avgUnitPrice,
       avg_quantity_per_order: avgQtyPerOrder,
-      days_active:            daysActive,
+      days_active: daysActive,
     };
 
     // Try ML service — fall back gracefully on any error
@@ -76,22 +83,26 @@ export class ForecastService {
           reorderLevel: product.reorderLevel,
         },
         forecast: {
-          avgDailyQuantity:   mlResult.avg_daily_quantity,
-          forecast7Days:      mlResult.forecast_7_days,
+          avgDailyQuantity: mlResult.avg_daily_quantity,
+          forecast7Days: mlResult.forecast_7_days,
           forecastTotal7Days: mlResult.forecast_total_7_days,
-          daysUntilStockout:  mlResult.avg_daily_quantity > 0
-            ? Math.floor(product.stock / mlResult.avg_daily_quantity)
-            : null,
+          daysUntilStockout:
+            mlResult.avg_daily_quantity > 0
+              ? Math.floor(product.stock / mlResult.avg_daily_quantity)
+              : null,
           reorderRecommended: product.stock <= product.reorderLevel,
         },
         fallback: false,
         fallbackReason: undefined,
       };
-
     } catch {
       // ML service is down or timed out — use rule-based fallback
-      const fallbackResult = await this.fallback.forecastProduct(storeId, productId);
-      if (!fallbackResult) throw new NotFoundException('Product not found in this store');
+      const fallbackResult = await this.fallback.forecastProduct(
+        storeId,
+        productId,
+      );
+      if (!fallbackResult)
+        throw new NotFoundException('Product not found in this store');
       return fallbackResult;
     }
   }

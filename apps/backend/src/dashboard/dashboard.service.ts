@@ -77,10 +77,21 @@ export class DashboardService {
       }),
     ]);
 
-    const lowStockCount = allProducts.filter((p) => p.stock <= p.reorderLevel).length;
+    const lowStockCount = allProducts.filter(
+      (p) => p.stock <= p.reorderLevel,
+    ).length;
 
     // Aggregate top products in memory (safe and relation-filtered)
-    const productSalesMap = new Map<string, { productId: string; name: string; sku: string; totalQuantitySold: number; totalRevenue: number }>();
+    const productSalesMap = new Map<
+      string,
+      {
+        productId: string;
+        name: string;
+        sku: string;
+        totalQuantitySold: number;
+        totalRevenue: number;
+      }
+    >();
 
     for (const item of saleItems) {
       const existing = productSalesMap.get(item.productId) || {
@@ -130,7 +141,10 @@ export class DashboardService {
       orderBy: { createdAt: 'asc' },
     });
 
-    const weekMap: Record<string, { week: string; revenue: number; count: number }> = {};
+    const weekMap: Record<
+      string,
+      { week: string; revenue: number; count: number }
+    > = {};
 
     for (const sale of sales) {
       const date = new Date(sale.createdAt);

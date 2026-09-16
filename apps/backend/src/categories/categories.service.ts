@@ -30,7 +30,9 @@ export class CategoriesService {
       });
     } catch (error) {
       if (isPrismaError(error, 'P2002')) {
-        throw new ConflictException('Category name already exists in this store');
+        throw new ConflictException(
+          'Category name already exists in this store',
+        );
       }
 
       throw error;
@@ -72,7 +74,11 @@ export class CategoriesService {
     return category;
   }
 
-  async update(storeId: string, id: string, updateCategoryDto: UpdateCategoryDto) {
+  async update(
+    storeId: string,
+    id: string,
+    updateCategoryDto: UpdateCategoryDto,
+  ) {
     await this.findOne(storeId, id);
 
     try {
@@ -86,7 +92,9 @@ export class CategoriesService {
       }
 
       if (isPrismaError(error, 'P2002')) {
-        throw new ConflictException('Category name already exists in this store');
+        throw new ConflictException(
+          'Category name already exists in this store',
+        );
       }
 
       throw error;
