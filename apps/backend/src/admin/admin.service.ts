@@ -3,6 +3,7 @@ import {
   ConflictException,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service.js';
 import * as bcrypt from 'bcryptjs';
@@ -84,21 +85,22 @@ export class AdminService {
     storeId: string,
     data: { email: string; password?: string; role: string; name?: string },
   ) {
+    const email = data.email.toLowerCase().trim();
     const existing = await this.prisma.user.findUnique({
-      where: { email: data.email },
+      where: { email },
     });
     if (existing) {
       throw new ConflictException('User with this email already exists');
     }
-    const password = data.password || 'password123';
+    const password = data.password && data.password.trim() ? data.password.trim() : 'password123';
     const hashedPassword = await bcrypt.hash(password, 10);
-    const name = data.name || data.email.split('@')[0];
+    const name = data.name || email.split('@')[0];
 
     const user = await this.prisma.user.create({
       data: {
         storeId,
-        email: data.email,
-        name: name,
+        email,
+        name,
         passwordHash: hashedPassword,
         role: data.role as any,
       },
@@ -110,7 +112,31 @@ export class AdminService {
       },
     });
 
-    return user;
+    return {
+      ...user,
+      initialPassword: password,
+    };
+  }
+
+  async updateUserPassword(storeId: string, id: string, newPassword: string) {
+    if (!newPassword || newPassword.trim().length < 6) {
+      throw new BadRequestException('Password must be at least 6 characters');
+    }
+
+    const userToUpdate = await this.prisma.user.findFirst({
+      where: { id, storeId },
+    });
+    if (!userToUpdate) {
+      throw new NotFoundException('User not found in this store');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword.trim(), 10);
+    await this.prisma.user.update({
+      where: { id },
+      data: { passwordHash: hashedPassword },
+    });
+
+    return { message: 'Password updated successfully' };
   }
 
   async deleteUser(storeId: string, id: string, currentUser: any) {

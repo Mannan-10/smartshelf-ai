@@ -57,4 +57,13 @@ export class AdminController {
   ) {
     return this.adminService.updateUserRole(storeId, id, body.role);
   }
+
+  @Patch('users/:id/password')
+  updateUserPassword(
+    @CurrentStore() storeId: string,
+    @Param('id') id: string,
+    @Body() body: { password: string },
+  ) {
+    return this.adminService.updateUserPassword(storeId, id, body.password);
+  }
 }
