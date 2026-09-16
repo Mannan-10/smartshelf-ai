@@ -9,10 +9,11 @@ import {
 import { getApiErrorMessage, readJsonSafely } from "@/lib/backend-api";
 
 export async function POST(request: NextRequest) {
+  const backendUrl = getBackendApiUrl();
   try {
     const body = await request.json();
 
-    const backendResponse = await fetch(`${getBackendApiUrl()}/auth/register`, {
+    const backendResponse = await fetch(`${backendUrl}/auth/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -24,9 +25,10 @@ export async function POST(request: NextRequest) {
     const data = await readJsonSafely<unknown>(backendResponse);
 
     if (!backendResponse.ok) {
+      const errorMsg = getApiErrorMessage(data, "Registration failed");
       return NextResponse.json(
         {
-          message: getApiErrorMessage(data, "Something went wrong"),
+          message: errorMsg,
         },
         {
           status: backendResponse.status,
@@ -47,13 +49,15 @@ export async function POST(request: NextRequest) {
     }
 
     return response;
-  } catch {
+  } catch (error) {
+    const errorDetail = error instanceof Error ? error.message : "Network error";
+    console.error(`[Auth Register Proxy Error] Failed connecting to backend at ${backendUrl}/auth/register:`, error);
     return NextResponse.json(
       {
-        message: "Unable to register. Please try again.",
+        message: `Unable to reach backend server (${backendUrl}). ${errorDetail}. Please ensure the backend is running and NEXT_PUBLIC_API_URL is configured.`,
       },
       {
-        status: 500,
+        status: 502,
       }
     );
   }

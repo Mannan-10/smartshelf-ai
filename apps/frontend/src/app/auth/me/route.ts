@@ -3,6 +3,7 @@ import { AUTH_COOKIE_NAME, getBackendApiUrl } from "@/lib/auth-config";
 import { getApiErrorMessage, readJsonSafely } from "@/lib/backend-api";
 
 export async function GET(request: NextRequest) {
+  const backendUrl = getBackendApiUrl();
   try {
     const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
 
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const backendResponse = await fetch(`${getBackendApiUrl()}/auth/profile`, {
+    const backendResponse = await fetch(`${backendUrl}/auth/profile`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
     if (!backendResponse.ok) {
       const response = NextResponse.json(
         {
-          message: getApiErrorMessage(data, "Something went wrong"),
+          message: getApiErrorMessage(data, "Unauthorized"),
         },
         {
           status: backendResponse.status,
@@ -45,13 +46,14 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(data);
-  } catch {
+  } catch (error) {
+    console.error(`[Auth Me Proxy Error] Failed connecting to backend at ${backendUrl}/auth/profile:`, error);
     return NextResponse.json(
       {
-        message: "Unable to fetch user profile",
+        message: "Unable to fetch user profile from backend service",
       },
       {
-        status: 500,
+        status: 502,
       }
     );
   }

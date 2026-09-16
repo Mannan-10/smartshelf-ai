@@ -6,7 +6,7 @@ export async function readJsonSafely<T>(response: Response): Promise<T | null> {
     }
 }
 
-export function getApiErrorMessage(data: unknown, fallback: "Something went wrong"): string {
+export function getApiErrorMessage(data: unknown, fallback: string = "Something went wrong"): string {
     const response = data as {
         message?: string | string[];
         error?: string;

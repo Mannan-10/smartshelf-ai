@@ -1,9 +1,15 @@
 export const AUTH_COOKIE_NAME = "smartshelf_access_token"
 
 export const getBackendApiUrl = () => {
-    return (
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
-    )
+    const url =
+        process.env.INTERNAL_API_URL ||
+        process.env.BACKEND_URL ||
+        process.env.API_URL ||
+        process.env.NEXT_PUBLIC_BACKEND_URL ||
+        process.env.NEXT_PUBLIC_API_URL ||
+        "http://localhost:4000";
+
+    return url.trim().replace(/\/+$/, "");
 };
 
 export const authCookieOptions = {
