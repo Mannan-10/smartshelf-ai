@@ -60,4 +60,8 @@ export class UpdateProductDto {
   @IsOptional()
   @IsDateString()
   expiryDate?: string | null;
+
+  @IsOptional()
+  @IsString()
+  shelfLocationId?: string | null;
 }

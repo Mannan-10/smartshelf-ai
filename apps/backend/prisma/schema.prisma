@@ -25,6 +25,7 @@ model Store {
   stockMovements StockMovement[]
   batches        ProductBatch[]
   shopSettings   ShopSettings[]
+  shelfLocations ShelfLocation[]
 
   @@map("stores")
 }
@@ -62,11 +63,14 @@ model Product {
   stockMovements StockMovement[]
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
-  saleItems      SaleItem[]
-  batches        ProductBatch[]
+  saleItems       SaleItem[]
+  batches         ProductBatch[]
+  shelfLocationId String?
+  shelfLocation   ShelfLocation?      @relation(fields: [shelfLocationId], references: [id], onDelete: SetNull)
 
   @@index([storeId])
   @@index([categoryId])
+  @@index([shelfLocationId])
   @@unique([storeId, sku])
 }
 
@@ -142,10 +146,13 @@ model ProductBatch {
   expiryDate      DateTime?
   receivedAt      DateTime       @default(now())
   createdAt       DateTime       @default(now())
+  shelfLocationId String?
+  shelfLocation   ShelfLocation? @relation(fields: [shelfLocationId], references: [id], onDelete: SetNull)
 
   @@index([storeId])
   @@index([productId])
   @@index([expiryDate])
+  @@index([shelfLocationId])
   @@map("product_batches")
 }
 
@@ -251,4 +258,26 @@ model ShopSettings {
 
   @@index([storeId])
   @@map("shop_settings")
+}
+
+model ShelfLocation {
+  id        String   @id @default(cuid())
+  storeId   String?
+  store     Store?   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  code      String   // e.g. "A1-RA-S2"
+  aisle     String   // e.g. "Aisle 1"
+  rack      String   // e.g. "Rack A"
+  shelf     String   // e.g. "Shelf 2"
+  bin       String?  // e.g. "Bin 04"
+  capacity  Int      @default(100) // maximum item unit capacity
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products       Product[]
+  productBatches ProductBatch[]
+
+  @@unique([storeId, code])
+  @@index([storeId])
+  @@map("shelf_locations")
 }

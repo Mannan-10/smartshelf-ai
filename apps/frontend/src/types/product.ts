@@ -7,9 +7,9 @@ export type Category = {
     id: string;
     name: string;
     description?: string | null;
-    creadtedAt?: string;
+    createdAt?: string;
     updatedAt?: string;
-    _count?:{
+    _count?: {
         Product: number;
     };
 };
@@ -26,6 +26,14 @@ export type Product = {
     costPrice?: number | string | null;
     sellingPrice?: number | string | null;
     expiryDate?: string | null;
+    shelfLocationId?: string | null;
+    shelfLocation?: {
+        id: string;
+        code: string;
+        aisle: string;
+        rack: string;
+        shelf: string;
+    } | null;
     createdAt?: string;
     updatedAt?: string;
 };
@@ -35,6 +43,7 @@ export type ProductPayload = {
     sku: string;
     description?: string;
     categoryId?: string;
+    shelfLocationId?: string;
     stock: number;
     reorderLevel: number;
     costPrice?: string;

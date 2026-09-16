@@ -66,9 +66,11 @@ export class ProductsService {
           expiryDate: createProductDto.expiryDate
             ? new Date(createProductDto.expiryDate)
             : undefined,
+          shelfLocationId: createProductDto.shelfLocationId,
         },
         include: {
           category: true,
+          shelfLocation: true,
         },
       });
     } catch (error) {
@@ -88,6 +90,7 @@ export class ProductsService {
       },
       include: {
         category: true,
+        shelfLocation: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -101,6 +104,7 @@ export class ProductsService {
       },
       include: {
         category: true,
+        shelfLocation: true,
       },
     });
 
@@ -137,9 +141,11 @@ export class ProductsService {
               : updateProductDto.expiryDate
                 ? new Date(updateProductDto.expiryDate)
                 : null,
+          shelfLocationId: updateProductDto.shelfLocationId,
         },
         include: {
           category: true,
+          shelfLocation: true,
         },
       });
     } catch (error) {
