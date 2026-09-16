@@ -8,12 +8,19 @@ import { salesApi } from '@/lib/sales-api';
 import { productsApi } from '@/lib/products-api';
 import { AddSaleDialog } from './add-sale-dialog';
 import { SaleTable } from './sale-table';
+import { ReceiptDialog } from './receipt-dialog';
 
-export function SalesManager() {
+type SalesManagerProps = {
+    storeName?: string | null;
+};
+
+export function SalesManager({ storeName }: SalesManagerProps = {}) {
     const [sales, setSales] = useState<Sale[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [justCreatedSale, setJustCreatedSale] = useState<Sale | null>(null);
+    const [receiptOpen, setReceiptOpen] = useState(false);
 
     const loadData = useCallback(async () => {
         setIsLoading(true);
@@ -53,6 +60,10 @@ export function SalesManager() {
                     <AddSaleDialog
                         products={products}
                         onSuccess={loadData}
+                        onSaleCompleted={(sale) => {
+                            setJustCreatedSale(sale);
+                            setReceiptOpen(true);
+                        }}
                     />
                 )}
             </div>
@@ -112,6 +123,13 @@ export function SalesManager() {
                     <SaleTable sales={sales} />
                 </div>
             )}
+
+            <ReceiptDialog
+                sale={justCreatedSale}
+                open={receiptOpen}
+                onOpenChange={setReceiptOpen}
+                storeName={storeName}
+            />
         </div>
     );
 }

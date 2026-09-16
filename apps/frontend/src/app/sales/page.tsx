@@ -12,7 +12,7 @@ export default async function SalesPage() {
 
     return (
         <AppShell role={user.role} email={user.email} storeName={user.storeName}>
-            <SalesManager />
+            <SalesManager storeName={user.storeName} />
         </AppShell>
     );
 }

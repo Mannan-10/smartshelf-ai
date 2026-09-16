@@ -7,6 +7,9 @@ export const saleItemSchema = z.object({
 });
 
 export const saleSchema = z.object({
+    paymentMethod: z.enum(['CASH', 'UPI', 'CARD', 'CREDIT']).default('CASH'),
+    customerName: z.string().optional(),
+    customerPhone: z.string().optional(),
     notes: z.string().optional(),
     items: z.array(saleItemSchema).min(1, 'Add at least one item'),
 });

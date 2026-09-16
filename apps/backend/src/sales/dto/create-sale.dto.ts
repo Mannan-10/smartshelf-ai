@@ -25,6 +25,21 @@ export class CreateSaleDto {
   @MaxLength(255)
   notes?: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  paymentMethod?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  customerName?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  customerPhone?: string;
+
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })

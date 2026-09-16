@@ -1,6 +1,7 @@
 'use client';
 
 import type { Product } from '@/types/product';
+import type { Sale } from '@/types/sale';
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -22,9 +23,10 @@ import { SaleForm } from './sale-form';
 type AddSaleDialogProps = {
     products: Product[];
     onSuccess: () => void;
+    onSaleCompleted?: (sale: Sale) => void;
 };
 
-export function AddSaleDialog({ products, onSuccess }: AddSaleDialogProps) {
+export function AddSaleDialog({ products, onSuccess, onSaleCompleted }: AddSaleDialogProps) {
     const [open, setOpen] = useState(false);
     const [apiError, setApiError] = useState<string | null>(null);
 
@@ -32,6 +34,9 @@ export function AddSaleDialog({ products, onSuccess }: AddSaleDialogProps) {
         resolver: zodResolver(saleSchema as any),
         defaultValues: {
             notes: '',
+            paymentMethod: 'CASH',
+            customerName: '',
+            customerPhone: '',
             items: [{ productId: '', quantity: 1, unitPrice: 0 }],
         },
     });
@@ -39,10 +44,19 @@ export function AddSaleDialog({ products, onSuccess }: AddSaleDialogProps) {
     async function handleSubmit(values: SaleFormValues) {
         setApiError(null);
         try {
-            await salesApi.createSale(values);
-            form.reset();
+            const created = await salesApi.createSale(values);
+            form.reset({
+                notes: '',
+                paymentMethod: 'CASH',
+                customerName: '',
+                customerPhone: '',
+                items: [{ productId: '', quantity: 1, unitPrice: 0 }],
+            });
             setOpen(false);
             onSuccess();
+            if (created && onSaleCompleted) {
+                onSaleCompleted(created);
+            }
         } catch (err) {
             setApiError(err instanceof Error ? err.message : 'Failed to create sale');
         }

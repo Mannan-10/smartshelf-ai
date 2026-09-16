@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { BarcodeLabelDialog } from "./barcode-label-dialog";
 
 type ProductTableProps = {
   products: Product[];
@@ -117,6 +118,13 @@ export function ProductTable({
 
                 <TableCell>
                   <div className="flex justify-end gap-2">
+                    <BarcodeLabelDialog
+                      productName={product.name}
+                      sku={product.sku}
+                      sellingPrice={typeof product.sellingPrice === 'number' ? product.sellingPrice : Number(product.sellingPrice) || 0}
+                      categoryName={product.category?.name}
+                    />
+
                     <Button
                       type="button"
                       variant="outline"

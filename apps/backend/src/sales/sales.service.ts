@@ -73,6 +73,9 @@ export class SalesService {
                 : new Date(),
               totalAmount,
               notes: createSaleDto.notes,
+              paymentMethod: createSaleDto.paymentMethod || 'CASH',
+              customerName: createSaleDto.customerName,
+              customerPhone: createSaleDto.customerPhone,
             },
           });
 

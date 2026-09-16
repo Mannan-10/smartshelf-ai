@@ -15,6 +15,9 @@ export type Sale = {
     invoiceNumber: string;
     saleDate: string;
     totalAmount: number;
+    paymentMethod?: string;
+    customerName?: string | null;
+    customerPhone?: string | null;
     notes?: string | null;
     createdAt: string;
     items: SaleItem[];
@@ -23,6 +26,9 @@ export type Sale = {
 export type SalePayload = {
     invoiceNumber?: string;
     saleDate?: string;
+    paymentMethod?: string;
+    customerName?: string;
+    customerPhone?: string;
     notes?: string;
     items: {
         productId: string;
