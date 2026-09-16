@@ -17,6 +17,7 @@ import { ReportsModule } from './reports/reports.module.js';
 import { ForecastModule } from './forecast/forecast.module.js';
 import { SettingsModule } from './settings/settings.module.js';
 import { ShelvesModule } from './shelves/shelves.module.js';
+import { AutomationModule } from './automation/automation.module.js';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { ShelvesModule } from './shelves/shelves.module.js';
     ForecastModule,
     SettingsModule,
     ShelvesModule,
+    AutomationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
