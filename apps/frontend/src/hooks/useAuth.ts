@@ -33,8 +33,12 @@ export function useAuth() {
 
         try {
             const response = await apiClient.login(values);
-            router.push(redirectTo);
-            router.refresh();
+            // Full navigation guarantees fresh cookies are sent in HTTP request headers to server components
+            if (typeof window !== "undefined") {
+                window.location.href = redirectTo;
+            } else {
+                router.push(redirectTo);
+            }
             return response;
         } finally {
             setIsLoading(false);
@@ -46,8 +50,11 @@ export function useAuth() {
 
         try {
             await apiClient.logout();
-            router.push("/login");
-            router.refresh();
+            if (typeof window !== "undefined") {
+                window.location.href = "/login";
+            } else {
+                router.push("/login");
+            }
         } finally {
             setIsLoading(false);
         }
